@@ -1,0 +1,94 @@
+
+PDF ANALİZ RAPORU
+=================
+Proje: smart-doc-insight
+Dosya: ornek-1.pdf
+Analiz Tarihi: 2025-05-07 16:49:23.581000
+
+GRUP ÜYELERİ
+------------
+
+
+SORUMLULUKLAR
+------------
+
+
+DİYAGRAMLAR
+-----------
+
+
+BAŞLIKLAR
+---------
+• PROJE ÖZETİ
+• Projenin Adı
+• Özel Amacı
+• Genel Hedefi
+• Çocukları doğru eğitmenin önemini velilerimizin kavrayabilmesini sağlamak
+
+EKSİKLER
+--------
+
+
+HAM ÇIKTI
+---------
+İşte bilgiler, PDF'nin içeriği analiz edildikten sonra çekilmiştir:
+
+• Grup üyeleri kimler? Bu belge özellikle bir kişisel proje olduğundan, grup üyesi bilgisi yok.
+
+• Kim hangi bölümden sorumlu? Proje özel bir durum olarak bu bilgi de yoktur.
+
+• Diyagramları kim çizmiş? Belge projesinde diyagram gösterilmemiş.
+
+• Belirgin başlıklar neler? Ailemimi Seviyorum, Kendimi Geliştiriyorum, Projesi (Bu başlıklerde kullanılan yazı tipi değişiklik gösterilmiş, şimdiden sonra sadece büyük harfler kullanılacaktır.)
+
+• İçerikte eksik görünen bir şey var mı? Evet, belge öğrenci projesidir ve daha fazla bilgi verilmiş değildir. Örneğin, işleve ait detaylar, kullanılan yöntemler, sonuçlar vb. yer almayacaktır. Diyagram gösterilmemişse da bu konuda düşündürülmelidir.
+
+ • Grup üyeleri kimler? Bayındır Mesleki ve Teknik Anadolu Lisesi konferans salonunda yer alan öğrenciler
+   • Kim hangi bölümden sorumlu? Başvuru sahibinin adını verilen başvuru sahibi (Bayındır İlçe Milli Eğitim Müdürlüğü)
+   • Diyagramları kim çizmiş? Belirlenmemiştir, diyagram yok.
+   • Belirgin başlıklar neler?
+     - PROJE ÖZETİ
+     - Projenin Adı
+     - Özel Amacı
+     - Genel Hedefi
+     - Çocukları doğru eğitmenin önemini velilerimizin kavrayabilmesini sağlamak
+     - Öğrencilerin sağlıklı olarak gelişimlerini tamamlayabilmelerine katkı sağlamak
+     - Öğrencilerin kişisel ve sosyal gelişimlerinin desteklenmesi, potansiyellerinin açığa çıkarmalarına imkân sağlamak
+   • İçerikte eksik görünen bir şey var mı? Evet, projenin başlangıç tarihi ve bitiş tarihi, toplam işgücü ve zaman kullanım hakkında bilgi yoktur.
+
+ • Grup üyeleri: Bayındır Kaymakamlığı ve Bayındır İlçesindeki Eğitim Kurumları
+   • Kim hangi bölümden sorumlu: Proje Ortakları Bayındır Kaymakamlığı
+   • Diyagramları kim çizmiş: Diyagram yok.
+   • Belirgin başlıklar neler: Projenin Hedef Kitlesi, Projenin Nihai Faydalanıcıları, Övelilerimizin çocuklarını doğru eğitme konusunda bilinçlenmesi, Projenin Beklenen Sonuçları, Projenin Temel Faaliyetleri Alanında uzman kişiler tarafından verilen seminerler ile velilerin eğitilmesini sağlamak.
+   • İçerikte eksik görünen bir şey var mı: İçeriğe genel bir tamamlandırma, ayrıntılar ve diyagramlar dahil olmak üzere temel bilgiler verilemiyor. Diyagramlardan ve detaylardan daha fazla bilgi istenildiğinde gerekli kaynaklar ile arama yapılmalıdır.
+
+ • Grup üyeleri kimler? Anne babaları (veliler)
+   • Kim hangi bölümden sorumlu? Proje Adı bölümünde söylenmiş olup, "Ailemi Seviyorum, Kendimi Geliştiriyorum" projenin sorumlusu ailesel eğitim alanında çalışan öğrenci.
+   • Diyagramları kim çizmiş? Diyagram yer almadı.
+   • Belirgin başlıklar neler? 1.1 Proje Adı, 1.2 Proje Konusu(Tanıtımı), 1.3 Projenin başlatılma gerekçeleri, 1.4 Projenin amacı
+   • İçerikte eksik görünen bir şey var mı? Diyagramlar yok. Ayrıca, belirli bir dizi veya ölçekler hakkında bilgi yoktur.
+
+1. Grup üyeleri kimler? Bilgisiz (PDF'de grup üyeleri belirtilmemiş).
+2. Kim hangi bölümden sorumlu? Bu bilgi değil, PDF'de sorunun nereden gelme yerine geleneksel anne – baba rolünün yerine öğrenen ve öğreten, bilinçli veli profilinin önüne çıkarılması hakkında yazılar.
+3. Diyagramları kim çizmiş? PDF'de diyagramlar bulunmamaktadır.
+4. Belirgin başlıklar neler? 1.5.Projenin hedefleri (PDF'nin en belirli başlığı)
+5. İçerikte eksik görünen bir şey var mı? Tam olarak bilgisayar tarafından oluşturulmuş PDF'ye yönelimmiş değildir, ancak bu proje özeti ise verilen bilgiyi içindeki detaylar düşünülmektedir. Diyagramlar ve görev alanların tanımlanması gerekirse bunların eklenmesi gerekebilir.
+
+1. Grup üyeleri: Enis Fidançioğlu ve Bahar Gönül Kirmaz
+2. Kim hangi bölümden sorumlu: Enis Fidançioğlu (Aile İçi) ve Bahar Gönül Kirmaz (Kaymakamlık, Ergenlik)
+3. Diyagramları kim çizmiş: Bilgi yok
+4. Belirgin başlıklar: 1.6 Projenin Hedef Kitlesi, 1.7 Projenin İşleyiş Akışı, 1.8 Proje çıktıları ve başarı ölçütleri, 1.9 Proje uygulama zamanı ve çalışma takvimi
+5. İçerikte eksik görünen bir şey var mı: Diyagramlar yok. Ayrıca projenin açıklanmasında kullanılacak yöntem ve araçlar hakkında bilgi verilmedi.
+
+1. Grup üyeleri kimler? Enis FİDANCIOĞLU, Sadık, Bahar Gönül KIRMAZ, Aysel UMULBİLİR, Nur Furtun SÖKMEN
+2. Kim hangi bölümden sorumlu? Bu bilgi hiç verilmemiştir.
+3. Diyagramları kim çizmiş? Bilgi yok.
+4. Belirgin başlıklar neler? 3 28 MART Sağlıklı, 2018 Yaşam ve Susamcıoğlu, 2018 Kaygısı, Anadolu Lisesi, Verimli Konferans Salonu, İstismarı, SALI, 6 HAZİRAN, 2018 PROJENİN GENEL DEĞERLENDİRME TOPLANTISI
+5. İçerikte eksik görünen bir şey var mı? Evet, içeriğe en sonunda yazılarının tarihi ve değişkenlerinin isimlerinin bulunması gerekmektedir. Örnek olarak: 3 28 MART Sağlıklı 14:00 Enis FİDANCIOĞLU Sadık (Tarih: 28 Mart 2018, Değişken: Sağlıklı)
+
+ • Grup üyeleri: Ali Ersin ESER (Bayındır İlçe Milli Eğitim Şube Müdürü), Muzaffer Tuzcuoğlu (Anadolu İmam Hatip Lisesi Rehber Öğretmeni), Enis FİDANCIOĞLU (İsmet İnönü Ortaokulu Rehber Öğretmeni), Bahar Gönül KIRMAZ (Fatih İlkokulu Rehber Öğretmeni), Aysel UMULBİLİR (Fatih İlkokulu Rehber Öğretmeni), Nur Furtun SÖKMEN (Konak Rehberlik ve Araştırma Merkezi Rehber Öğretmeni).
+   • Kim hangi bölümden sorumlu: Proje Koordinatörü/Yöneticisi Ali Ersin ESER.
+   • Diyagramları kim çizmiş: Bilgi yok.
+   • Belirgin başlıklar neler: 1.12.Proje Koordinatörü(Yöneticisi), 1.13.Proje Yürütme Kurulu.
+   • İçerikte eksik görünen bir şey var mı: Evet, belirtilmemiştir ki diyagramların kim çizmiş ve içeriğe ait farklı bir bölümlerin olup olmadığı.
+    
