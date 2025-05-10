@@ -1,0 +1,1 @@
+# Model modülü başlatma dosyası 
