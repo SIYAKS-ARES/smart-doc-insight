@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Doc Insight - Proje Düzenle{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title mb-4">Proje Düzenle: {{ project.name }}</h2>
+                
+                <form method="POST" action="{{ url_for('student.edit_project', project_id=project._id) }}">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Proje Adı <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ project.name }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Proje Açıklaması</label>
+                        <textarea class="form-control" id="description" name="description" rows="3">{{ project.description }}</textarea>
+                    </div>
+                    
+                    <hr class="my-4">
+                    <h4>Grup Üyeleri</h4>
+                    <p class="text-muted small">Projedeki grup üyelerini ve sorumluluklarını düzenleyin.</p>
+                    
+                    <div id="group-members">
+                        {% for i in range(1, 5) %}
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="member_name_{{ i }}" class="form-label">Üye Adı</label>
+                                    <input type="text" class="form-control" id="member_name_{{ i }}" name="member_name_{{ i }}" 
+                                        value="{{ project.group_members[i-1].name if project.group_members|length >= i else '' }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="member_resp_{{ i }}" class="form-label">Sorumlulukları</label>
+                                    <input type="text" class="form-control" id="member_resp_{{ i }}" name="member_resp_{{ i }}" 
+                                        value="{{ project.group_members[i-1].responsibility if project.group_members|length >= i else '' }}">
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <div>
+                            <a href="{{ url_for('student.view_project', project_id=project._id) }}" class="btn btn-outline-secondary me-2">İptal</a>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteProjectModal">
+                                <i class="bi bi-trash"></i> Projeyi Sil
+                            </button>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Değişiklikleri Kaydet</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Silme Onayı Modal -->
+<div class="modal fade" id="deleteProjectModal" tabindex="-1" aria-labelledby="deleteProjectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteProjectModalLabel">Projeyi Sil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-danger"><i class="bi bi-exclamation-triangle"></i> <strong>Dikkat:</strong> Bu işlem geri alınamaz!</p>
+                <p>
+                    <strong>{{ project.name }}</strong> projesini ve tüm ilişkili dosyaları kalıcı olarak silmek istediğinizden emin misiniz?
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <form action="{{ url_for('student.delete_project', project_id=project._id) }}" method="POST">
+                    <button type="submit" class="btn btn-danger">Evet, Projeyi Sil</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

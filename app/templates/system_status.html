@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Doc Insight - Sistem Durumu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <h1 class="mb-4">Sistem Durumu</h1>
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Servis Durumları</h5>
+                
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Servis</th>
+                            <th>Durum</th>
+                            <th>Bilgi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>MongoDB</td>
+                            <td>
+                                {% if mongo_running %}
+                                    <span class="badge bg-success">Çalışıyor</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Çalışmıyor</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if not mongo_running %}
+                                    <span class="text-danger">MongoDB veritabanına bağlantı kurulamadı. Veritabanı servisinin çalıştığından emin olun.</span>
+                                {% else %}
+                                    <span class="text-success">Veritabanı bağlantısı başarılı.</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Ollama LLM Servisi</td>
+                            <td>
+                                {% if ollama_running %}
+                                    <span class="badge bg-success">Çalışıyor</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Çalışmıyor</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if not ollama_running %}
+                                    <span class="text-danger">Ollama LLM servisine bağlantı kurulamadı. Servisin çalıştığından ve "mistral:instruct" modelinin yüklü olduğundan emin olun.</span>
+                                {% else %}
+                                    <span class="text-success">Ollama servisine bağlantı başarılı.</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Sorun Giderme</h5>
+                
+                <div class="accordion" id="troubleshootingAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingOne">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                MongoDB Bağlantı Sorunu
+                            </button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#troubleshootingAccordion">
+                            <div class="accordion-body">
+                                <ol>
+                                    <li>MongoDB servisinin yüklü ve çalışır durumda olduğundan emin olun.</li>
+                                    <li>Terminal veya komut istemcisinde <code>mongod</code> komutunu çalıştırın.</li>
+                                    <li>.env dosyasındaki MongoDB bağlantı URL'sinin doğru olduğunu kontrol edin.</li>
+                                    <li>Firewall ayarlarınızın MongoDB port'unu engellememesi gerekir (varsayılan: 27017).</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingTwo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                Ollama LLM Servisi Sorunu
+                            </button>
+                        </h2>
+                        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#troubleshootingAccordion">
+                            <div class="accordion-body">
+                                <ol>
+                                    <li>Ollama'nın <a href="https://ollama.ai/download" target="_blank">ollama.ai</a> adresinden yüklü olduğundan emin olun.</li>
+                                    <li>Aşağıdaki komutu çalıştırarak Ollama servisini başlatın:
+                                        <pre><code>ollama serve</code></pre>
+                                    </li>
+                                    <li>Mistral modelini indirin:
+                                        <pre><code>ollama pull mistral:instruct</code></pre>
+                                    </li>
+                                    <li>.env dosyasındaki OLLAMA_BASE_URL adresinin doğru olduğunu kontrol edin (varsayılan: http://localhost:11434)</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <a href="{{ url_for('main.index') }}" class="btn btn-primary">Ana Sayfaya Dön</a>
+    </div>
+</div>
+{% endblock %} 

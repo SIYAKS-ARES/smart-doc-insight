@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Doc Insight - Hakkında{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <h1 class="mb-4">Smart Doc Insight Hakkında</h1>
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Projemiz</h5>
+                <p class="card-text">
+                    Smart Doc Insight, öğrenci projelerinin yapay zeka ile analiz edilmesini sağlayan bir web uygulamasıdır. Bu platform, öğrencilerin PDF formatındaki dökümanlarını yükleyip paylaşmalarına ve öğretmenlerin bu dökümanları yapay zeka teknolojisi ile incelemelerine olanak tanır.
+                </p>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Teknoloji</h5>
+                <p class="card-text">
+                    Projemiz aşağıdaki teknolojileri kullanmaktadır:
+                </p>
+                <ul>
+                    <li><b>Backend:</b> Python Flask framework</li>
+                    <li><b>Frontend:</b> HTML, CSS, Bootstrap ve JavaScript</li>
+                    <li><b>Veritabanı:</b> MongoDB</li>
+                    <li><b>Yapay Zeka:</b> Ollama ile çalışan Mistral:instruct modeli</li>
+                    <li><b>PDF İşleme:</b> pdfplumber kütüphanesi</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Nasıl Çalışır?</h5>
+                <ol>
+                    <li>Öğrenciler hesap oluşturur ve grup projelerini sisteme kaydeder.</li>
+                    <li>Her proje için PDF formatında dökümanlar yüklenir.</li>
+                    <li>Öğretmenler, yüklenen dökümanları görüntüleyebilir.</li>
+                    <li>Dökümanlar, AI tarafından analiz edilir ve önemli bilgiler çıkarılır.</li>
+                    <li>Analiz sonuçları yapılandırılmış bir şekilde öğretmene sunulur.</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">İletişim</h5>
+                <p class="card-text">
+                    Sorularınız veya geri bildirimleriniz için lütfen <a href="mailto:info@smartdocinsight.com">info@smartdocinsight.com</a> adresine e-posta gönderin.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

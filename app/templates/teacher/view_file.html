@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Doc Insight - Dosya: {{ file_data.filename }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1>Dosya Analizi: {{ file_data.filename }}</h1>
+        <p class="text-muted">Proje: <a href="{{ url_for('teacher.view_project', project_id=project._id) }}">{{ project.name }}</a></p>
+    </div>
+    <a href="{{ url_for('teacher.view_project', project_id=project._id) }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Projeye Dön
+    </a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Dosya Bilgileri</h5>
+    </div>
+    <div class="card-body">
+        <p><strong>Dosya Adı:</strong> {{ file_data.filename }}</p>
+        <p><strong>Yükleme Tarihi:</strong> {{ file_data.upload_date.strftime('%d.%m.%Y %H:%M') }}</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">LLM Analizi</h5>
+        <div>
+            {% if analysis %}
+                <a href="{{ url_for('teacher.download_analysis', project_id=project._id, file_index=file_index) }}" class="btn btn-sm btn-secondary me-2">
+                    <i class="bi bi-download"></i> Raporu İndir
+                </a>
+            {% endif %}
+            <form action="{{ url_for('teacher.analyze_file', project_id=project._id, file_index=file_index) }}" method="POST" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-primary analyze-button" {% if not g.ollama_available %}disabled{% endif %}>
+                    <i class="bi bi-robot"></i> {{ 'Tekrar Analiz Et' if analysis else 'Analiz Et' }}
+                </button>
+            </form>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if not g.ollama_available %}
+            <div class="alert alert-warning" role="alert">
+                <i class="bi bi-exclamation-triangle"></i> LLM servisi (Ollama) şu anda çalışmıyor. Analiz yapılamıyor.
+                Lütfen <a href="{{ url_for('main.system_status') }}" class="alert-link">sistem durumu</a> sayfasını kontrol edin.
+            </div>
+        {% endif %}
+        
+        {% if analysis %}
+            <div class="mb-3">
+                <strong>Analiz Tarihi:</strong> {{ analysis.analyzed_at.strftime('%d.%m.%Y %H:%M') }}
+
+                {% if "API Hatası: 404" in analysis.content.ham_sonuc %}
+                    <div class="alert alert-danger mt-3">
+                        <i class="bi bi-exclamation-circle-fill"></i> 
+                        <strong>Eski model hatası tespit edildi!</strong> 
+                        Bu analiz, artık kullanılmayan bir model ile yapılmıştır. Lütfen aşağıdaki butonu kullanarak yeniden analiz edin.
+                        <form action="{{ url_for('teacher.analyze_file', project_id=project._id, file_index=file_index) }}" method="POST" class="mt-2">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-arrow-clockwise"></i> Yeniden Analiz Et
+                            </button>
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="row {% if "API Hatası: 404" in analysis.content.ham_sonuc %}opacity-50{% endif %}">
+                <div class="col-md-6 mb-3">
+                    <h6>Grup Üyeleri</h6>
+                    <ul class="list-group list-group-flush">
+                        {% for member in analysis.content.grup_uyeleri %}
+                            <li class="list-group-item">{{ member }}</li>
+                        {% else %}
+                            <li class="list-group-item text-muted">Bulunamadı</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <h6>Sorumluluklar</h6>
+                    <ul class="list-group list-group-flush">
+                        {% for resp in analysis.content.sorumluluklar %}
+                            <li class="list-group-item">{{ resp }}</li>
+                        {% else %}
+                            <li class="list-group-item text-muted">Bulunamadı</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <h6>Diyagramları Çizenler</h6>
+                    <ul class="list-group list-group-flush">
+                        {% for diag in analysis.content.diyagramlar %}
+                            <li class="list-group-item">{{ diag }}</li>
+                        {% else %}
+                            <li class="list-group-item text-muted">Bulunamadı</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <h6>Başlıklar</h6>
+                    <ul class="list-group list-group-flush">
+                        {% for title in analysis.content.basliklar %}
+                            <li class="list-group-item">{{ title }}</li>
+                        {% else %}
+                            <li class="list-group-item text-muted">Bulunamadı</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="col-12 mb-3">
+                    <h6>Eksikler</h6>
+                    <ul class="list-group list-group-flush">
+                        {% for miss in analysis.content.eksikler %}
+                            <li class="list-group-item">{{ miss }}</li>
+                        {% else %}
+                            <li class="list-group-item text-muted">Eksik bulunamadı</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="col-12">
+                    <h6>Ham Çıktı</h6>
+                    {% if "API Hatası:" in analysis.content.ham_sonuc %}
+                        <div class="alert alert-danger">
+                            <h5><i class="bi bi-exclamation-triangle-fill"></i> API Hatası Tespit Edildi</h5>
+                            <p>Bu dosya analizi sırasında API hatası oluştu. Lütfen "Yeniden Analiz Et" butonu ile tekrar analiz ettirin.</p>
+                        </div>
+                    {% endif %}
+                    <pre class="bg-light p-3 rounded {% if "API Hatası:" in analysis.content.ham_sonuc %}border border-danger text-danger{% endif %}" style="max-height: 300px; overflow-y: auto;"><code>{{ analysis.content.ham_sonuc }}</code></pre>
+                </div>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-hourglass-split" style="font-size: 4rem; color: #ddd;"></i>
+                <h4 class="mt-3">Henüz analiz yapılmadı</h4>
+                <p class="text-muted">Bu PDF dosyasını LLM ile analiz etmek için "Analiz Et" butonuna tıklayın.</p>
+                <form action="{{ url_for('teacher.analyze_file', project_id=project._id, file_index=file_index) }}" method="POST">
+                    <button type="submit" class="btn btn-primary mt-2 analyze-button" {% if not g.ollama_available %}disabled{% endif %}>
+                        <i class="bi bi-robot"></i> Analiz Et
+                    </button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{# JavaScript bloğu geçici olarak kaldırıldı #}
+{% endblock %} 

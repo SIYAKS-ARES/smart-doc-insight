@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Doc Insight - Kayıt{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4">Hesap Oluştur</h2>
+                
+                <form method="POST" action="{{ url_for('auth.register') }}">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Kullanıcı Adı</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">E-posta Adresi</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Şifre</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="confirm" class="form-label">Şifreyi Doğrula</label>
+                        <input type="password" class="form-control" id="confirm" name="confirm" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Kullanıcı Rolü</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="role" id="roleStudent" value="student" checked>
+                            <label class="form-check-label" for="roleStudent">
+                                Öğrenci
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="role" id="roleTeacher" value="teacher">
+                            <label class="form-check-label" for="roleTeacher">
+                                Öğretmen
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Kayıt Ol</button>
+                    </div>
+                </form>
+                
+                <div class="text-center mt-3">
+                    <p>Zaten hesabınız var mı? <a href="{{ url_for('auth.login') }}">Giriş Yap</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Doc Insight - Hatalı Analizleri Temizle{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3>Eski Model Analizlerini Temizle</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <strong>Bu araç ne yapar?</strong>
+                        <p>
+                            Bu araç, eski "mistral:instruct" modeli ile yapılmış ve hata içeren analizleri veritabanından temizler. 
+                            Temizlenen analizler yerine dosyaları yeniden analiz edebilirsiniz.
+                        </p>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>Uyarı!</strong>
+                        <p>
+                            Bu işlem geri alınamaz. Silinen analizler kalıcı olarak kaldırılacaktır.
+                        </p>
+                    </div>
+                    
+                    <form action="{{ url_for('teacher.fix_old_analyses') }}" method="POST" class="mt-4" onsubmit="return confirm('Tüm hatalı analizleri silmek istediğinize emin misiniz?');">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Hatalı Analizleri Temizle
+                        </button>
+                        <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-secondary ms-2">
+                            <i class="bi bi-x"></i> İptal
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

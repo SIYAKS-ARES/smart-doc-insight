@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Doc Insight - Ollama Test{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>Ollama Test Sonuçları</h3>
+            <p class="text-muted">Test zamanı: {{ test_result.test_time }}</p>
+        </div>
+        <div class="card-body">
+            <div class="mb-4">
+                <h5>Bağlantı Durumu</h5>
+                {% if test_result.ollama_check %}
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle-fill"></i> Ollama servisine bağlantı başarılı
+                    </div>
+                {% else %}
+                    <div class="alert alert-danger">
+                        <i class="bi bi-x-circle-fill"></i> Ollama servisine bağlantı kurulamadı
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-4">
+                <h5>Mevcut Modeller</h5>
+                {% if test_result.available_models %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Model Adı</th>
+                                    <th>Boyut</th>
+                                    <th>Aile</th>
+                                    <th>Parametre Boyutu</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for model in test_result.available_models %}
+                                    <tr>
+                                        <td>{{ model.name }}</td>
+                                        <td>{{ (model.size / 1024 / 1024)|round|int }} MB</td>
+                                        <td>{{ model.details.family }}</td>
+                                        <td>{{ model.details.parameter_size }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i> Hiç model bulunamadı
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-4">
+                <h5>Test Sorgusu Sonucu</h5>
+                {% if test_result.model_response %}
+                    <div class="alert alert-success mb-3">
+                        <i class="bi bi-check-circle-fill"></i> Model başarıyla yanıt döndürdü
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Yanıt</div>
+                        <div class="card-body">
+                            <pre class="mb-0">{{ test_result.model_response }}</pre>
+                        </div>
+                    </div>
+                {% elif test_result.error %}
+                    <div class="alert alert-danger">
+                        <i class="bi bi-x-circle-fill"></i> Hata: {{ test_result.error }}
+                    </div>
+                    {% if test_result.traceback %}
+                        <div class="card mt-3">
+                            <div class="card-header">Hata Ayrıntıları</div>
+                            <div class="card-body">
+                                <pre class="mb-0" style="max-height: 300px; overflow-y: auto;">{{ test_result.traceback }}</pre>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i> Test çalıştırılamadı
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-footer">
+            <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-secondary">Panele Dön</a>
+            <a href="{{ url_for('teacher.test_ollama') }}" class="btn btn-primary">Testi Tekrarla</a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Doc Insight - Ana Sayfa{% endblock %}
+
+{% block content %}
+<div class="row align-items-center">
+    <div class="col-md-6">
+        <h1 class="mb-4">Smart Doc Insight</h1>
+        <p class="lead">Öğrenci projelerinin analizi için yapay zeka destekli platformumuza hoş geldiniz!</p>
+        <p>Smart Doc Insight, öğrencilerin proje dökümanlarını yükleyip paylaşabileceği ve öğretmenlerin bu dökümanları yapay zeka ile hızlıca analiz edebileceği yenilikçi bir platformdur.</p>
+        
+        <div class="mt-4">
+            {% if not current_user.is_authenticated %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Giriş Yap</a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary">Hesap Oluştur</a>
+            {% else %}
+                {% if current_user.is_student() %}
+                    <a href="{{ url_for('student.dashboard') }}" class="btn btn-primary">Projelerim</a>
+                    <a href="{{ url_for('student.new_project') }}" class="btn btn-outline-primary">Yeni Proje</a>
+                {% elif current_user.is_teacher() %}
+                    <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-primary">Projeleri Görüntüle</a>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-6">
+        <img src="https://via.placeholder.com/600x400?text=Smart+Doc+Insight" alt="Smart Doc Insight" class="img-fluid rounded shadow mt-4 mt-md-0">
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <h2 class="text-center mb-4">Özellikler</h2>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-cloud-upload text-primary" style="font-size: 3rem;"></i>
+                <h5 class="card-title mt-3">PDF Yükleme</h5>
+                <p class="card-text">Proje dökümanlarınızı kolayca yükleyin ve yönetin.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-robot text-primary" style="font-size: 3rem;"></i>
+                <h5 class="card-title mt-3">LLM Analizi</h5>
+                <p class="card-text">Yapay zeka modelleriyle dökümanlar otomatik olarak analiz edilir.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-people text-primary" style="font-size: 3rem;"></i>
+                <h5 class="card-title mt-3">Grup Çalışması</h5>
+                <p class="card-text">Grup üyeleri ve sorumlulukları takip edilir ve raporlanır.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

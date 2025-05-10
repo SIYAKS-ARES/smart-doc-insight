@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Doc Insight - Profil{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title mb-4">Kullanıcı Profili</h2>
+                
+                <div class="row">
+                    <div class="col-md-3 text-center mb-4 mb-md-0">
+                        <div class="bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center" style="width: 150px; height: 150px;">
+                            <i class="bi bi-person-fill" style="font-size: 5rem;"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-9">
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <th scope="row" style="width: 30%;">Kullanıcı Adı:</th>
+                                    <td>{{ current_user.username }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">E-posta:</th>
+                                    <td>{{ current_user.email }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Rol:</th>
+                                    <td>
+                                        {% if current_user.is_student() %}
+                                            <span class="badge bg-primary">Öğrenci</span>
+                                        {% elif current_user.is_teacher() %}
+                                            <span class="badge bg-info">Öğretmen</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <div class="mt-4">
+                            {% if current_user.is_student() %}
+                                <a href="{{ url_for('student.dashboard') }}" class="btn btn-primary">
+                                    <i class="bi bi-folder"></i> Projelerim
+                                </a>
+                            {% elif current_user.is_teacher() %}
+                                <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-primary">
+                                    <i class="bi bi-folder"></i> Projeleri Görüntüle
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
