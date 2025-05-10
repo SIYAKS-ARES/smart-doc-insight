@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual Environments
+env/
+venv/
+.flaskenv
+.idea/
+*.env
+*.env.*
+
+# VSCode
+.vscode/
+
+# Mac OS
+.DS_Store
+
+# Ollama cache (varsa)
+ollama/
+
+# Log files
+*.log
+
+# Flask uploads
+uploads/
+instance/
+
+# Python egg files
+*.egg-info/
+*.egg
+
+# Byte-compiled / optimized / DLL files
+*.so
+
+# MongoDB dump files (varsa)
+dump/
+
+# pip packages list (optional backup, bu dosyayı tutuyorsan dışarda bırakma)
+# requirements.txt
+
+# Test cache
+htmlcov/
+.coverage
+.tox/
+.pytest_cache/
+.cache/
+nosetests.xml
+coverage.xml
+
+# Jupyter Notebook checkpoints (kullanıyorsan)
+.ipynb_checkpoints/
