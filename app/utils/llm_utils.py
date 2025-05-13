@@ -2,16 +2,15 @@ import requests
 import json
 import time
 from flask import current_app
-import ollama  # yeni import
 import traceback  # hataları detaylı loglamak için eklenen import
+import os
+
+from app.utils.llm import get_llm_client
 
 def analyze_text_with_llm(text_chunks):
     """
     Metin parçalarını LLM ile analiz eder ve sonucu döndürür
     """
-    base_url = current_app.config.get('OLLAMA_BASE_URL', 'http://localhost:11434')
-    # model = "mistral:7b-instruct"
-    
     results = []
     
     # Analiz promtu
@@ -28,62 +27,34 @@ def analyze_text_with_llm(text_chunks):
     
     Yanıtı madde madde ver."""
     
-    # Her parça için Ollama'ya istek gönder
-    for chunk in text_chunks:
-        prompt = prompt_template.format(content=chunk)
+    try:
+        # LLM istemcisini al
+        client = get_llm_client()
         
-        try:
-            print("Ollama Python istemcisi kullanılıyor...")
+        # Her parça için LLM'e istek gönder
+        for chunk in text_chunks:
+            prompt = prompt_template.format(content=chunk)
+            
             try:
-                # Ollama Python istemcisini kullanarak istek gönder
-                response = ollama.generate(
-                    model="mistral:latest",
-                    prompt=prompt,
-                    options={
-                        "temperature": 0.7,
-                    }
-                )
-                
-                print(f"Ollama API yanıtı: {response}")
-                result = response.get('response', '')
+                # LLM Provider üzerinden yanıt al
+                result = client.generate(prompt, options={"temperature": 0.7})
                 results.append(result)
-                
+                    
             except Exception as client_error:
-                print(f"Ollama Python istemcisi hatası: {str(client_error)}")
+                print(f"LLM istemci hatası: {str(client_error)}")
                 print(traceback.format_exc())
                 
-                # Python istemcisi başarısız olursa, HTTP isteği ile dene
-                print("HTTP isteği ile deneniyor...")
-                payload = {
-                    "model": "mistral:latest",
-                    "prompt": prompt,
-                    "stream": False
-                }
-                print(f"Ollama'ya gönderilen payload: {payload}")
-                response = requests.post(
-                    f"{base_url}/api/generate",
-                    json=payload,
-                    timeout=300
-                )
-                
-                print(f"Ollama API yanıtı - durum kodu: {response.status_code}")
-                print(f"Ollama API yanıtı - içerik: {response.text}")
-                
-                if response.status_code == 200:
-                    result = response.json().get('response', '')
-                    results.append(result)
-                else:
-                    error_msg = f"API Hatası: {response.status_code}, {response.text}"
-                    print(f"Ollama API Hatası: {error_msg}")
-                    results.append(error_msg)
+                error_msg = f"LLM Hatası: {str(client_error)}"
+                print(error_msg)
+                results.append(error_msg)
                 
             # API hız sınırlarını aşmamak için kısa bir bekleme
             time.sleep(1)
             
-        except requests.exceptions.RequestException as e:
-            error_msg = f"İstek Hatası: {str(e)}"
-            print(f"Ollama İstek Hatası: {error_msg}")
-            results.append(error_msg)
+    except Exception as e:
+        error_msg = f"Genel Hata: {str(e)}"
+        print(error_msg)
+        results.append(error_msg)
     
     # Tüm sonuçları birleştir
     combined_result = "\n\n".join(results)
@@ -284,6 +255,72 @@ def check_ollama_availability():
     except requests.exceptions.RequestException:
         return False 
 
+def check_lmstudio_availability():
+    """
+    LM Studio servisinin çalışıp çalışmadığını kontrol eder
+    """
+    try:
+        import lmstudio
+        
+        # Mevcut konfigürasyon hatasını yakala ve görmezden gel
+        try:
+            lmstudio.configure_default_client("localhost:1234")
+            print("LM Studio API bağlantısı başarıyla yapılandırıldı")
+        except Exception as e:
+            # Eğer yapılandırma zaten mevcutsa, bu hatayı yok sayabiliriz
+            print(f"LM Studio yapılandırma kontrolü: {str(e)}")
+        
+        # Bağlantıyı test etmek için modelleri listele
+        try:
+            models = lmstudio.list_loaded_models()
+            if models:
+                # Model bilgilerini güvenli bir şekilde erişmeye çalış
+                model_names = []
+                for model in models:
+                    try:
+                        if hasattr(model, 'display_name'):
+                            model_names.append(model.display_name)
+                        else:
+                            # Alternatif olarak model.__dict__ içeriklerine bak
+                            model_attrs = getattr(model, '__dict__', {})
+                            if 'display_name' in model_attrs:
+                                model_names.append(model_attrs['display_name'])
+                            else:
+                                model_names.append(str(model))
+                    except:
+                        model_names.append("bilinmeyen_model")
+                
+                if model_names:
+                    print(f"LM Studio bağlantısı başarılı. Yüklü modeller: {', '.join(model_names)}")
+                else:
+                    print("LM Studio API'ye bağlanıldı, yüklü modeller tespit edildi ancak isimleri alınamadı")
+            else:
+                print("LM Studio API'ye bağlanıldı, ancak hiç yüklü model bulunamadı.")
+            return True
+        except Exception as e:
+            print(f"LM Studio model listesi alınamadı: {str(e)}")
+            return False
+            
+    except ImportError:
+        print("LM Studio paketi yüklü değil")
+        return False
+    except Exception as e:
+        print(f"LM Studio erişim hatası: {str(e)}")
+        return False
+
+def check_llm_availability():
+    """
+    Yapılandırılmış LLM sağlayıcısının çalışıp çalışmadığını kontrol eder
+    """
+    provider = os.getenv('LLM_PROVIDER', 'ollama')
+    
+    if provider == 'ollama':
+        return check_ollama_availability()
+    elif provider == 'lmstudio':
+        return check_lmstudio_availability()
+    else:
+        return False
+
 def get_available_models():
     """
     Ollama'da mevcut modelleri listeler
@@ -296,4 +333,114 @@ def get_available_models():
             return response.json().get('models', [])
         return []
     except requests.exceptions.RequestException:
-        return [] 
+        return []
+
+def check_api_llm_availability(provider, api_key=None, user_id=None):
+    """
+    API tabanlı LLM sağlayıcısının çalışıp çalışmadığını kontrol eder
+    
+    Args:
+        provider: LLM sağlayıcı adı ('openai', 'gemini', 'claude')
+        api_key: Kullanılacak API anahtarı (None ise APIKeyManager'dan alınır)
+        user_id: Kullanıcı ID'si (None ise current_user kullanılır)
+        
+    Returns:
+        bool: Sağlayıcı kullanılabilir mi
+    """
+    try:
+        from app.utils.llm import get_llm_client
+        from app.utils.api_key_manager import APIKeyManager
+        
+        # API anahtarını al (parametre > APIKeyManager)
+        if api_key is None:
+            api_key = APIKeyManager.get_api_key(provider, user_id)
+            
+        if not api_key:
+            print(f"{provider.capitalize()} API anahtarı bulunamadı")
+            return False
+        
+        # API anahtarını kullanarak istemciyi başlat
+        client = get_llm_client(force_provider=provider, api_key=api_key, user_id=user_id)
+        
+        # Kısa bir test isteği gönder
+        response = client.generate("Merhaba, bu bir test mesajıdır.", options={"max_tokens": 20})
+        
+        # Eğer hata içeren yanıt döndüyse, başarısız olarak değerlendir
+        if response.startswith(f"{provider.capitalize()} Hatası:"):
+            print(f"API bağlantı testi yanıtı hata içeriyor: {response}")
+            return False
+            
+        print(f"{provider.capitalize()} API bağlantı testi başarılı")
+        return True
+    except Exception as e:
+        print(f"{provider.capitalize()} API bağlantı testi başarısız: {str(e)}")
+        return False
+
+def check_openai_availability(api_key=None, user_id=None):
+    """
+    OpenAI API'sinin çalışıp çalışmadığını kontrol eder
+    
+    Args:
+        api_key: Kullanılacak API anahtarı (None ise APIKeyManager'dan alınır)
+        user_id: Kullanıcı ID'si (None ise current_user kullanılır)
+        
+    Returns:
+        bool: OpenAI API kullanılabilir mi
+    """
+    from app.utils.api_key_manager import APIKeyManager
+    
+    # API anahtarı verilmemişse APIKeyManager'dan al
+    if api_key is None:
+        api_key = APIKeyManager.get_api_key("openai", user_id)
+        
+    if not api_key:
+        print("OpenAI API anahtarı bulunamadı")
+        return False
+    
+    return check_api_llm_availability("openai", api_key, user_id)
+
+def check_gemini_availability(api_key=None, user_id=None):
+    """
+    Google Gemini API'sinin çalışıp çalışmadığını kontrol eder
+    
+    Args:
+        api_key: Kullanılacak API anahtarı (None ise APIKeyManager'dan alınır)
+        user_id: Kullanıcı ID'si (None ise current_user kullanılır)
+        
+    Returns:
+        bool: Gemini API kullanılabilir mi
+    """
+    from app.utils.api_key_manager import APIKeyManager
+    
+    # API anahtarı verilmemişse APIKeyManager'dan al
+    if api_key is None:
+        api_key = APIKeyManager.get_api_key("gemini", user_id)
+        
+    if not api_key:
+        print("Google API anahtarı bulunamadı")
+        return False
+    
+    return check_api_llm_availability("gemini", api_key, user_id)
+
+def check_claude_availability(api_key=None, user_id=None):
+    """
+    Anthropic Claude API'sinin çalışıp çalışmadığını kontrol eder
+    
+    Args:
+        api_key: Kullanılacak API anahtarı (None ise APIKeyManager'dan alınır)
+        user_id: Kullanıcı ID'si (None ise current_user kullanılır)
+        
+    Returns:
+        bool: Claude API kullanılabilir mi
+    """
+    from app.utils.api_key_manager import APIKeyManager
+    
+    # API anahtarı verilmemişse APIKeyManager'dan al
+    if api_key is None:
+        api_key = APIKeyManager.get_api_key("claude", user_id)
+        
+    if not api_key:
+        print("Anthropic API anahtarı bulunamadı")
+        return False
+    
+    return check_api_llm_availability("claude", api_key, user_id) 
