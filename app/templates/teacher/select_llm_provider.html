@@ -1,0 +1,420 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Doc Insight - LLM Sağlayıcı Seçimi{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0"><i class="bi bi-tools"></i> LLM Sağlayıcı Seçimi</h3>
+        </div>
+        <div class="card-body">
+            <!-- Aktif Sağlayıcı Bilgisi -->
+            <div class="alert alert-info mb-4">
+                <h5><i class="bi bi-info-circle"></i> Aktif LLM Sağlayıcı: 
+                    {% if current_provider == 'ollama' %}
+                        <span class="badge bg-success">Ollama</span>
+                    {% elif current_provider == 'lmstudio' %}
+                        <span class="badge bg-success">LM Studio</span>
+                    {% elif current_provider == 'openai' %}
+                        <span class="badge bg-success">OpenAI GPT</span>
+                    {% elif current_provider == 'gemini' %}
+                        <span class="badge bg-success">Google Gemini</span>
+                    {% elif current_provider == 'claude' %}
+                        <span class="badge bg-success">Anthropic Claude</span>
+                    {% else %}
+                        <span class="badge bg-warning">Bilinmiyor</span>
+                    {% endif %}
+                </h5>
+                <p class="mb-0">Farklı bir LLM sağlayıcı seçmek için aşağıdaki ayarları kullanın. Her sağlayıcının kendine özgü ayarları ve gereksinimleri vardır.</p>
+            </div>
+        
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="list-group" id="list-tab" role="tablist">
+                        <a class="list-group-item list-group-item-action {% if current_provider == 'ollama' %}active{% endif %}" id="list-ollama-list" data-bs-toggle="list" href="#list-ollama" role="tab" aria-controls="list-ollama">
+                            <i class="bi bi-robot"></i> Ollama
+                            {% if current_provider == 'ollama' %}
+                                <span class="badge bg-primary float-end">Aktif</span>
+                            {% endif %}
+                        </a>
+                        <a class="list-group-item list-group-item-action {% if current_provider == 'lmstudio' %}active{% endif %}" id="list-lmstudio-list" data-bs-toggle="list" href="#list-lmstudio" role="tab" aria-controls="list-lmstudio">
+                            <i class="bi bi-braces"></i> LM Studio 
+                            {% if current_provider == 'lmstudio' %}
+                                <span class="badge bg-primary float-end">Aktif</span>
+                            {% endif %}
+                        </a>
+                        <a class="list-group-item list-group-item-action {% if current_provider == 'openai' %}active{% endif %}" id="list-openai-list" data-bs-toggle="list" href="#list-openai" role="tab" aria-controls="list-openai">
+                            <i class="bi bi-chat-dots"></i> OpenAI GPT
+                            {% if current_provider == 'openai' %}
+                                <span class="badge bg-primary float-end">Aktif</span>
+                            {% endif %}
+                        </a>
+                        <a class="list-group-item list-group-item-action {% if current_provider == 'gemini' %}active{% endif %}" id="list-gemini-list" data-bs-toggle="list" href="#list-gemini" role="tab" aria-controls="list-gemini">
+                            <i class="bi bi-google"></i> Google Gemini
+                            {% if current_provider == 'gemini' %}
+                                <span class="badge bg-primary float-end">Aktif</span>
+                            {% endif %}
+                        </a>
+                        <a class="list-group-item list-group-item-action {% if current_provider == 'claude' %}active{% endif %}" id="list-claude-list" data-bs-toggle="list" href="#list-claude" role="tab" aria-controls="list-claude">
+                            <i class="bi bi-chat-square-text"></i> Anthropic Claude
+                            {% if current_provider == 'claude' %}
+                                <span class="badge bg-primary float-end">Aktif</span>
+                            {% endif %}
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <div class="tab-content" id="list-tabContent">
+                        <!-- OLLAMA -->
+                        <div class="tab-pane fade {% if current_provider == 'ollama' %}show active{% endif %}" id="list-ollama" role="tabpanel" aria-labelledby="list-ollama-list">
+                            <div class="card mb-3 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-robot fs-4 me-2 text-primary"></i>
+                                        <h5 class="card-title mb-0">Ollama Ayarları</h5>
+                                    </div>
+                                    <p class="text-muted">
+                                        Ollama, yerel makinenizde çalışan açık kaynaklı bir LLM platformudur. Performansı bilgisayarınızın donanımına bağlıdır.
+                                    </p>
+                                    <form method="POST" action="{{ url_for('teacher.select_llm_provider') }}">
+                                        <input type="hidden" name="llm_provider" value="ollama">
+                                        <div class="d-flex">
+                                            <button type="submit" class="btn btn-primary me-2">
+                                                <i class="bi bi-check-circle"></i> Ollama'yı Seç
+                                            </button>
+                                            <a href="{{ url_for('teacher.test_ollama') }}" class="btn btn-outline-primary me-2">
+                                                <i class="bi bi-speedometer"></i> Ollama'yı Test Et
+                                            </a>
+                                            <a href="https://ollama.ai/download" target="_blank" class="btn btn-outline-secondary">
+                                                <i class="bi bi-download"></i> Ollama'yı İndir
+                                            </a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- LM STUDIO -->
+                        <div class="tab-pane fade {% if current_provider == 'lmstudio' %}show active{% endif %}" id="list-lmstudio" role="tabpanel" aria-labelledby="list-lmstudio-list">
+                            <div class="card mb-3 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-braces fs-4 me-2 text-success"></i>
+                                        <h5 class="card-title mb-0">LM Studio Ayarları</h5>
+                                    </div>
+                                    <p class="text-muted">
+                                        LM Studio, yerel makinenizde çalışan kullanıcı dostu bir LLM platformudur. API Server özelliğini etkinleştirmeniz gerekir.
+                                    </p>
+                                    <form method="POST" action="{{ url_for('teacher.select_llm_provider') }}">
+                                        <input type="hidden" name="llm_provider" value="lmstudio">
+                                        <div class="d-flex">
+                                            <button type="submit" class="btn btn-success me-2">
+                                                <i class="bi bi-check-circle"></i> LM Studio'yu Seç
+                                            </button>
+                                            <a href="{{ url_for('teacher.test_llm') }}" class="btn btn-outline-success me-2">
+                                                <i class="bi bi-speedometer"></i> LM Studio'yu Test Et
+                                            </a>
+                                            <a href="https://lmstudio.ai/" target="_blank" class="btn btn-outline-secondary">
+                                                <i class="bi bi-download"></i> LM Studio'yu İndir
+                                            </a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- OPENAI -->
+                        <div class="tab-pane fade {% if current_provider == 'openai' %}show active{% endif %}" id="list-openai" role="tabpanel" aria-labelledby="list-openai-list">
+                            <div class="card mb-3 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <i class="bi bi-chat-dots fs-4 me-2 text-info"></i>
+                                        <h5 class="card-title mb-0">OpenAI API Ayarları</h5>
+                                    </div>
+                                    
+                                    <form method="POST" action="{{ url_for('teacher.select_llm_provider') }}">
+                                        <input type="hidden" name="llm_provider" value="openai">
+                                        
+                                        <div class="form-group mb-3">
+                                            <label for="openai_api_key" class="form-label">OpenAI API Anahtarı:</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-key"></i></span>
+                                                <input type="password" id="openai_api_key" name="api_key" class="form-control"
+                                                       placeholder="sk-..." autocomplete="off">
+                                                <button type="button" class="btn btn-outline-secondary toggle-password" data-target="openai_api_key">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                            </div>
+                                            {% if has_openai_key %}
+                                                <div class="form-text text-success">
+                                                    <i class="bi bi-check-circle"></i> API anahtarı kaydedilmiş. Değiştirmek için yeni anahtarı girin.
+                                                </div>
+                                            {% else %}
+                                                <div class="form-text text-muted">
+                                                    API anahtarınızı <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">OpenAI Dashboard</a>'dan alabilirsiniz.
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="form-group mb-3">
+                                            <label for="openai_model" class="form-label">Model Seçin:</label>
+                                            <select id="openai_model" name="api_model" class="form-select">
+                                                {% for model in openai_models %}
+                                                <option value="{{ model }}" {% if model == selected_openai_model %}selected{% endif %}>{{ model }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="d-flex">
+                                            <button type="submit" class="btn btn-info text-white me-2">
+                                                <i class="bi bi-check-circle"></i> OpenAI'yı Seç
+                                            </button>
+                                            <a href="{{ url_for('teacher.test_api_llm') }}?provider=openai" class="btn btn-outline-info">
+                                                <i class="bi bi-speedometer"></i> OpenAI Bağlantısını Test Et
+                                            </a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- GEMINI -->
+                        <div class="tab-pane fade {% if current_provider == 'gemini' %}show active{% endif %}" id="list-gemini" role="tabpanel" aria-labelledby="list-gemini-list">
+                            <div class="card mb-3 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <i class="bi bi-google fs-4 me-2 text-danger"></i>
+                                        <h5 class="card-title mb-0">Google Gemini API Ayarları</h5>
+                                    </div>
+                                    
+                                    <form method="POST" action="{{ url_for('teacher.select_llm_provider') }}">
+                                        <input type="hidden" name="llm_provider" value="gemini">
+                                        
+                                        <div class="form-group mb-3">
+                                            <label for="google_api_key" class="form-label">Google API Anahtarı:</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-key"></i></span>
+                                                <input type="password" id="google_api_key" name="api_key" class="form-control"
+                                                       placeholder="API Anahtarınız" autocomplete="off">
+                                                <button type="button" class="btn btn-outline-secondary toggle-password" data-target="google_api_key">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                            </div>
+                                            {% if has_gemini_key %}
+                                                <div class="form-text text-success">
+                                                    <i class="bi bi-check-circle"></i> API anahtarı kaydedilmiş. Değiştirmek için yeni anahtarı girin.
+                                                </div>
+                                            {% else %}
+                                                <div class="form-text text-muted">
+                                                    API anahtarınızı <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a>'dan alabilirsiniz.
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="form-group mb-3">
+                                            <label for="gemini_model" class="form-label">Model Seçin:</label>
+                                            <select id="gemini_model" name="api_model" class="form-select">
+                                                {% for model in gemini_models %}
+                                                <option value="{{ model }}" {% if model == selected_gemini_model %}selected{% endif %}>{{ model }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="d-flex">
+                                            <button type="submit" class="btn btn-danger me-2">
+                                                <i class="bi bi-check-circle"></i> Gemini'yi Seç
+                                            </button>
+                                            <a href="{{ url_for('teacher.test_api_llm') }}?provider=gemini" class="btn btn-outline-danger">
+                                                <i class="bi bi-speedometer"></i> Gemini Bağlantısını Test Et
+                                            </a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- CLAUDE -->
+                        <div class="tab-pane fade {% if current_provider == 'claude' %}show active{% endif %}" id="list-claude" role="tabpanel" aria-labelledby="list-claude-list">
+                            <div class="card mb-3 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <i class="bi bi-chat-square-text fs-4 me-2 text-warning"></i>
+                                        <h5 class="card-title mb-0">Anthropic Claude API Ayarları</h5>
+                                    </div>
+                                    
+                                    <form method="POST" action="{{ url_for('teacher.select_llm_provider') }}">
+                                        <input type="hidden" name="llm_provider" value="claude">
+                                        
+                                        <div class="form-group mb-3">
+                                            <label for="anthropic_api_key" class="form-label">Anthropic API Anahtarı:</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-key"></i></span>
+                                                <input type="password" id="anthropic_api_key" name="api_key" class="form-control"
+                                                       placeholder="sk-ant-..." autocomplete="off">
+                                                <button type="button" class="btn btn-outline-secondary toggle-password" data-target="anthropic_api_key">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                            </div>
+                                            {% if has_claude_key %}
+                                                <div class="form-text text-success">
+                                                    <i class="bi bi-check-circle"></i> API anahtarı kaydedilmiş. Değiştirmek için yeni anahtarı girin.
+                                                </div>
+                                            {% else %}
+                                                <div class="form-text text-muted">
+                                                    API anahtarınızı <a href="https://console.anthropic.com/account/keys" target="_blank" rel="noopener noreferrer">Anthropic Console</a>'dan alabilirsiniz.
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="form-group mb-3">
+                                            <label for="claude_model" class="form-label">Model Seçin:</label>
+                                            <select id="claude_model" name="api_model" class="form-select">
+                                                {% for model in claude_models %}
+                                                <option value="{{ model }}" {% if model == selected_claude_model %}selected{% endif %}>{{ model }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="d-flex">
+                                            <button type="submit" class="btn btn-warning text-dark me-2">
+                                                <i class="bi bi-check-circle"></i> Claude'u Seç
+                                            </button>
+                                            <a href="{{ url_for('teacher.test_api_llm') }}?provider=claude" class="btn btn-outline-warning">
+                                                <i class="bi bi-speedometer"></i> Claude Bağlantısını Test Et
+                                            </a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Genel Bilgiler ve Kılavuz Bölümü -->
+            <div class="mt-4">
+                <h4><i class="bi bi-info-circle"></i> LLM Sağlayıcı Kılavuzu</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3 shadow-sm border-0" style="border-radius: 10px;">
+                            <div class="card-header bg-light" style="border-radius: 10px 10px 0 0;">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-cpu fs-4 me-2"></i>
+                                    <h5 class="mb-0">Yerel Sağlayıcılar</h5>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush mb-3">
+                                    <li class="list-group-item d-flex align-items-center">
+                                        <i class="bi bi-robot fs-4 me-3 text-primary"></i>
+                                        <div>
+                                            <strong>Ollama</strong>
+                                            <p class="mb-0 text-muted small">Kendi bilgisayarınızda çalışan, açık kaynaklı LLM platformu</p>
+                                        </div>
+                                    </li>
+                                    <li class="list-group-item d-flex align-items-center">
+                                        <i class="bi bi-braces fs-4 me-3 text-success"></i>
+                                        <div>
+                                            <strong>LM Studio</strong>
+                                            <p class="mb-0 text-muted small">Yerel makinenizde çalışan, kullanıcı dostu LLM arayüzü</p>
+                                        </div>
+                                    </li>
+                                </ul>
+                                
+                                <div class="alert alert-secondary" style="border-radius: 8px;">
+                                    <div class="d-flex">
+                                        <div class="me-2"><i class="bi bi-plus-circle"></i></div>
+                                        <div><strong>Avantaj:</strong> İnternet bağlantısı ve API anahtarı gerektirmez, veri gizliliği</div>
+                                    </div>
+                                    <div class="d-flex mt-2">
+                                        <div class="me-2"><i class="bi bi-dash-circle"></i></div>
+                                        <div><strong>Dezavantaj:</strong> Bilgisayar donanımınıza bağlı olarak performans değişir</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3 shadow-sm border-0" style="border-radius: 10px;">
+                            <div class="card-header bg-light" style="border-radius: 10px 10px 0 0;">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-cloud fs-4 me-2"></i>
+                                    <h5 class="mb-0">API Tabanlı Sağlayıcılar</h5>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush mb-3">
+                                    <li class="list-group-item d-flex align-items-center">
+                                        <i class="bi bi-chat-dots fs-4 me-3 text-info"></i>
+                                        <div>
+                                            <strong>OpenAI</strong>
+                                            <p class="mb-0 text-muted small">GPT-3.5, GPT-4 gibi güçlü dil modellerini sunar</p>
+                                        </div>
+                                    </li>
+                                    <li class="list-group-item d-flex align-items-center">
+                                        <i class="bi bi-google fs-4 me-3 text-danger"></i>
+                                        <div>
+                                            <strong>Google Gemini</strong>
+                                            <p class="mb-0 text-muted small">Google'ın en gelişmiş yapay zeka modelleri</p>
+                                        </div>
+                                    </li>
+                                    <li class="list-group-item d-flex align-items-center">
+                                        <i class="bi bi-chat-square-text fs-4 me-3 text-warning"></i>
+                                        <div>
+                                            <strong>Anthropic Claude</strong>
+                                            <p class="mb-0 text-muted small">Güvenlik odaklı yapay zeka asistanı</p>
+                                        </div>
+                                    </li>
+                                </ul>
+                                
+                                <div class="alert alert-secondary" style="border-radius: 8px;">
+                                    <div class="d-flex">
+                                        <div class="me-2"><i class="bi bi-plus-circle"></i></div>
+                                        <div><strong>Avantaj:</strong> Yüksek performans ve doğruluk, güçlü cihaz gerektirmez</div>
+                                    </div>
+                                    <div class="d-flex mt-2">
+                                        <div class="me-2"><i class="bi bi-dash-circle"></i></div>
+                                        <div><strong>Dezavantaj:</strong> API anahtarı ve internet bağlantısı gerektirir, ücretlendirme olabilir</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sayfa yüklendiğinde, mevcut sağlayıcıya uygun tab'ı göster
+    const currentProvider = '{{ current_provider }}';
+    const tabToShow = document.getElementById(`list-${currentProvider}-list`);
+    if (tabToShow) {
+        const tab = new bootstrap.Tab(tabToShow);
+        tab.show();
+    }
+    
+    // API anahtarı görünürlüğünü değiştirme
+    const toggleButtons = document.querySelectorAll('.toggle-password');
+    toggleButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                this.querySelector('i').classList.remove('bi-eye');
+                this.querySelector('i').classList.add('bi-eye-slash');
+            } else {
+                input.type = 'password';
+                this.querySelector('i').classList.remove('bi-eye-slash');
+                this.querySelector('i').classList.add('bi-eye');
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 
