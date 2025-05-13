@@ -4,7 +4,7 @@ flask-cors==4.0.2
 pymongo>=4.6.3
 python-dotenv==1.0.0
 pdfplumber==0.10.1
-requests==2.31.0
+requests>=2.32.0
 Werkzeug==3.0.6
 gunicorn==23.0.0
 lmstudio==0.0.1
