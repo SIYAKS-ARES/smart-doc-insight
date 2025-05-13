@@ -126,7 +126,11 @@ def upload_file(project_id):
             return redirect(url_for('student.view_project', project_id=project_id))
         else:
             flash('Geçersiz dosya türü. Sadece PDF dosyaları kabul edilir', 'danger')
-            return redirect(request.url)
+            from urllib.parse import urlparse
+            parsed_url = urlparse(request.url)
+            if not parsed_url.netloc and not parsed_url.scheme:
+                return redirect(request.url)
+            return redirect(url_for('student.upload_file', project_id=project_id))
     
     return render_template('student/upload_file.html', project=project)
 
