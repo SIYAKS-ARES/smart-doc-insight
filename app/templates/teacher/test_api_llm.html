@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Doc Insight - API LLM Testi{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h3 class="mb-0">
+                <i class="bi bi-cloud"></i> API Tabanlı LLM Test
+            </h3>
+            <p class="text-muted mb-0 mt-1 text-white-50">OpenAI, Google Gemini ve Anthropic Claude API bağlantılarını test edin</p>
+        </div>
+        <div class="card-body">
+            <!-- Test Formu -->
+            <form method="POST" action="{{ url_for('teacher.test_api_llm') }}">
+                <div class="mb-4">
+                    <label class="form-label">LLM Sağlayıcı Seçin</label>
+                    <div class="d-flex">
+                        <div class="form-check form-check-inline me-4">
+                            <input class="form-check-input" type="radio" name="provider" id="openai" value="openai" 
+                                   {% if selected_provider == 'openai' %}checked{% endif %}>
+                            <label class="form-check-label" for="openai">
+                                <i class="bi bi-chat-dots"></i> OpenAI GPT
+                                {% if has_openai_key %}
+                                    <span class="badge bg-success">API Anahtarı Mevcut</span>
+                                {% endif %}
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline me-4">
+                            <input class="form-check-input" type="radio" name="provider" id="gemini" value="gemini"
+                                   {% if selected_provider == 'gemini' %}checked{% endif %}>
+                            <label class="form-check-label" for="gemini">
+                                <i class="bi bi-google"></i> Google Gemini
+                                {% if has_gemini_key %}
+                                    <span class="badge bg-success">API Anahtarı Mevcut</span>
+                                {% endif %}
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="provider" id="claude" value="claude"
+                                   {% if selected_provider == 'claude' %}checked{% endif %}>
+                            <label class="form-check-label" for="claude">
+                                <i class="bi bi-chat-square-text"></i> Anthropic Claude
+                                {% if has_claude_key %}
+                                    <span class="badge bg-success">API Anahtarı Mevcut</span>
+                                {% endif %}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="api_key" class="form-label">API Anahtarı</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-key"></i></span>
+                                <input type="password" class="form-control" id="api_key" name="api_key" 
+                                       placeholder="Yeni anahtarı buraya girin veya kayıtlı anahtarı kullanın">
+                                <button class="btn btn-outline-secondary" type="button" onclick="toggleApiKeyVisibility()">
+                                    <i id="toggleIcon" class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                Yeni bir API anahtarı girmek için yukarıdaki alanı doldurun veya boş bırakarak kayıtlı anahtarı kullanın.
+                            </div>
+                            <div class="form-check form-switch mt-3">
+                                <input class="form-check-input" type="checkbox" name="save_key" id="save_key" checked>
+                                <label class="form-check-label" for="save_key">
+                                    <strong><i class="bi bi-save"></i> Bu API anahtarını kaydet</strong>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="model" class="form-label">Model</label>
+                            <select class="form-select" id="model" name="model">
+                                <optgroup label="OpenAI Modelleri">
+                                    {% for model in openai_models %}
+                                    <option value="{{ model }}" data-provider="openai" 
+                                            {% if selected_provider == 'openai' and selected_model == model %}selected{% endif %}>
+                                        {{ model }}
+                                    </option>
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="Google Gemini Modelleri">
+                                    {% for model in gemini_models %}
+                                    <option value="{{ model }}" data-provider="gemini"
+                                            {% if selected_provider == 'gemini' and selected_model == model %}selected{% endif %}>
+                                        {{ model }}
+                                    </option>
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="Anthropic Claude Modelleri">
+                                    {% for model in claude_models %}
+                                    <option value="{{ model }}" data-provider="claude"
+                                            {% if selected_provider == 'claude' and selected_model == model %}selected{% endif %}>
+                                        {{ model }}
+                                    </option>
+                                    {% endfor %}
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <button type="submit" class="btn btn-info">
+                        <i class="bi bi-lightning"></i> API Bağlantısını Test Et
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Test Sonuçları (eğer test yapıldıysa) -->
+            {% if test_result %}
+            <hr class="my-4">
+            <div class="test-results">
+                <h4 class="mb-3">Test Sonuçları</h4>
+                
+                <!-- API kaydedilme durumu -->
+                {% if test_result.key_saved %}
+                <div class="alert alert-success mb-3">
+                    <i class="bi bi-check-circle"></i> <strong>API anahtarı başarıyla kaydedildi</strong>
+                </div>
+                {% endif %}
+                
+                <div class="alert {% if test_result.model_response %}alert-success{% elif test_result.error %}alert-danger{% else %}alert-warning{% endif %}">
+                    <h5>
+                        {% if test_result.model_response %}
+                            <i class="bi bi-check-circle-fill"></i> Bağlantı Başarılı
+                        {% elif test_result.error %}
+                            <i class="bi bi-x-circle-fill"></i> Bağlantı Hatası
+                        {% else %}
+                            <i class="bi bi-exclamation-triangle-fill"></i> Test Tamamlanamadı
+                        {% endif %}
+                    </h5>
+                    <p class="mb-0">
+                        <strong>Sağlayıcı:</strong> {{ test_result.provider_name }}<br>
+                        <strong>Model:</strong> {{ test_result.model_name }}<br>
+                        <strong>Test Zamanı:</strong> {{ test_result.test_time }}<br>
+                        {% if test_result.use_saved_key %}
+                            <strong>Kullanılan Anahtar:</strong> Kayıtlı API anahtarı
+                        {% else %}
+                            <strong>Kullanılan Anahtar:</strong> Yeni girilen API anahtarı
+                        {% endif %}
+                    </p>
+                </div>
+                
+                {% if test_result.model_response %}
+                    <div class="card mt-3">
+                        <div class="card-header">Model Yanıtı</div>
+                        <div class="card-body">
+                            <pre class="mb-0">{{ test_result.model_response }}</pre>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                {% if test_result.error %}
+                    <div class="card mt-3">
+                        <div class="card-header">Hata Mesajı</div>
+                        <div class="card-body">
+                            <pre class="mb-0 text-danger">{{ test_result.error }}</pre>
+                        </div>
+                    </div>
+                    
+                    {% if test_result.error_tip %}
+                        <div class="alert alert-warning mt-3">
+                            <i class="bi bi-lightbulb"></i> <strong>İpucu:</strong> {{ test_result.error_tip }}
+                        </div>
+                    {% endif %}
+                    
+                    {% if test_result.traceback %}
+                        <div class="card mt-3">
+                            <div class="card-header">Hata Ayrıntıları</div>
+                            <div class="card-body">
+                                <pre class="mb-0" style="max-height: 300px; overflow-y: auto;">{{ test_result.traceback }}</pre>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        <div class="card-footer">
+            <div class="row">
+                <div class="col">
+                    <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Panele Dön
+                    </a>
+                    <a href="{{ url_for('teacher.select_llm_provider') }}" class="btn btn-primary">
+                        <i class="bi bi-sliders"></i> LLM Sağlayıcı Ayarları
+                    </a>
+                </div>
+                <div class="col text-end">
+                    <a href="{{ url_for('teacher.test_api_llm') }}" class="btn btn-info">
+                        <i class="bi bi-arrow-clockwise"></i> Yeni Test
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sağlayıcı seçimine göre model listesini filtrele
+    const providerInputs = document.querySelectorAll('input[name="provider"]');
+    const modelSelect = document.getElementById('model');
+    
+    function updateModelOptions() {
+        const selectedProvider = document.querySelector('input[name="provider"]:checked').value;
+        
+        // Önce tüm seçenekleri gizle
+        Array.from(modelSelect.options).forEach(option => {
+            const optionProvider = option.getAttribute('data-provider');
+            option.style.display = (optionProvider === selectedProvider) ? '' : 'none';
+        });
+        
+        // Seçili sağlayıcıya ait ilk modeli seç
+        const firstVisibleOption = Array.from(modelSelect.options).find(
+            option => option.getAttribute('data-provider') === selectedProvider
+        );
+        
+        if (firstVisibleOption) {
+            firstVisibleOption.selected = true;
+        }
+    }
+    
+    // Sağlayıcı değiştiğinde modelleri güncelle
+    providerInputs.forEach(input => {
+        input.addEventListener('change', updateModelOptions);
+    });
+    
+    // Sayfa yüklendiğinde modelleri güncelle
+    updateModelOptions();
+});
+
+function toggleApiKeyVisibility() {
+    const apiKeyInput = document.getElementById('api_key');
+    const toggleIcon = document.getElementById('toggleIcon');
+    
+    if (apiKeyInput.type === "password") {
+        apiKeyInput.type = "text";
+        toggleIcon.classList.remove('bi-eye');
+        toggleIcon.classList.add('bi-eye-slash');
+    } else {
+        apiKeyInput.type = "password";
+        toggleIcon.classList.remove('bi-eye-slash');
+        toggleIcon.classList.add('bi-eye');
+    }
+}
+</script>
+{% endblock %} 
