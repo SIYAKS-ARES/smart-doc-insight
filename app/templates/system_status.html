@@ -48,14 +48,117 @@
                             </td>
                             <td>
                                 {% if not ollama_running %}
-                                    <span class="text-danger">Ollama LLM servisine bağlantı kurulamadı. Servisin çalıştığından ve "mistral:instruct" modelinin yüklü olduğundan emin olun.</span>
+                                    <span class="text-danger">Ollama LLM servisine bağlantı kurulamadı. Servisin çalıştığından ve "mistral:latest" modelinin yüklü olduğundan emin olun.</span>
                                 {% else %}
                                     <span class="text-success">Ollama servisine bağlantı başarılı.</span>
                                 {% endif %}
                             </td>
                         </tr>
+                        <tr>
+                            <td>LM Studio API</td>
+                            <td>
+                                {% if lmstudio_running %}
+                                    <span class="badge bg-success">Çalışıyor</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Çalışmıyor</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if not lmstudio_running %}
+                                    <span class="text-danger">LM Studio API'ye bağlantı kurulamadı (localhost:1234). LM Studio uygulamasının çalıştığından emin olun.</span>
+                                {% else %}
+                                    <span class="text-success">LM Studio bağlantısı başarılı.</span>
+                                {% endif %}
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">LLM Sağlayıcı Durumu</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <strong>Aktif LLM Sağlayıcısı:</strong> 
+                    {% if llm_info.provider == 'ollama' %}
+                        <span class="badge bg-primary">Ollama</span>
+                    {% elif llm_info.provider == 'lmstudio' %}
+                        <span class="badge bg-success">LM Studio</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ llm_info.provider }}</span>
+                    {% endif %}
+                </div>
+                
+                <div class="row">
+                    <!-- Ollama Bilgisi -->
+                    <div class="col-md-6">
+                        <div class="card h-100 {% if llm_info.provider == 'ollama' %}border-primary{% else %}bg-light text-muted{% endif %}">
+                            <div class="card-header {% if llm_info.provider == 'ollama' %}bg-primary text-white{% endif %}">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-robot"></i> Ollama
+                                    {% if llm_info.provider == 'ollama' %}
+                                        <span class="badge bg-light text-primary float-end">Aktif</span>
+                                    {% endif %}
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Model:</strong> {{ llm_info.ollama_model }}</p>
+                                <p>
+                                    <strong>Durum:</strong> 
+                                    {% if ollama_running %}
+                                        <span class="badge bg-success">Çalışıyor</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Çalışmıyor</span>
+                                    {% endif %}
+                                </p>
+                                <div class="d-grid">
+                                    <a href="{{ url_for('teacher.test_ollama') }}" class="btn {% if llm_info.provider == 'ollama' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                                        <i class="bi bi-wrench"></i> Test Et
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- LM Studio Bilgisi -->
+                    <div class="col-md-6">
+                        <div class="card h-100 {% if llm_info.provider == 'lmstudio' %}border-success{% else %}bg-light text-muted{% endif %}">
+                            <div class="card-header {% if llm_info.provider == 'lmstudio' %}bg-success text-white{% endif %}">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-braces"></i> LM Studio
+                                    {% if llm_info.provider == 'lmstudio' %}
+                                        <span class="badge bg-light text-success float-end">Aktif</span>
+                                    {% endif %}
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Model:</strong> {{ llm_info.lmstudio_model }}</p>
+                                <p>
+                                    <strong>Durum:</strong> 
+                                    {% if lmstudio_running %}
+                                        <span class="badge bg-success">Çalışıyor</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Çalışmıyor</span>
+                                    {% endif %}
+                                </p>
+                                <div class="d-grid">
+                                    <a href="{{ url_for('teacher.test_llm') }}" class="btn {% if llm_info.provider == 'lmstudio' %}btn-success{% else %}btn-outline-secondary{% endif %}">
+                                        <i class="bi bi-wrench"></i> Test Et
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3 d-grid">
+                    <a href="{{ url_for('teacher.select_llm_provider') }}" class="btn btn-primary">
+                        <i class="bi bi-sliders"></i> LLM Sağlayıcıyı Değiştir
+                    </a>
+                </div>
             </div>
         </div>
         
@@ -95,9 +198,30 @@
                                         <pre><code>ollama serve</code></pre>
                                     </li>
                                     <li>Mistral modelini indirin:
-                                        <pre><code>ollama pull mistral:instruct</code></pre>
+                                        <pre><code>ollama pull mistral:latest</code></pre>
                                     </li>
                                     <li>.env dosyasındaki OLLAMA_BASE_URL adresinin doğru olduğunu kontrol edin (varsayılan: http://localhost:11434)</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingThree">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                LM Studio Kurulumu
+                            </button>
+                        </h2>
+                        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#troubleshootingAccordion">
+                            <div class="accordion-body">
+                                <ol>
+                                    <li>LM Studio'yu <a href="https://lmstudio.ai" target="_blank">lmstudio.ai</a> adresinden indirin ve kurun.</li>
+                                    <li>Python integrasyonu için pip ile lmstudio paketini yükleyin:
+                                        <pre><code>pip install lmstudio</code></pre>
+                                    </li>
+                                    <li>LM Studio uygulamasını başlatın ve bir model indirin</li>
+                                    <li>LM Studio uygulamasında "Enable API" seçeneğinin aktif olduğundan emin olun (Settings > "API Server")</li>
+                                    <li>API sunucusunun <code>http://localhost:1234</code> adresinde çalıştığını kontrol edin</li>
+                                    <li>Yönetim > LLM Sağlayıcı Seçimi sayfasından LM Studio'yu aktifleştirin</li>
                                 </ol>
                             </div>
                         </div>
