@@ -1,7 +1,10 @@
 from app import create_app
+import os
 
 app = create_app()
  
 if __name__ == '__main__':
-    # Gunicorn veya başka bir WSGI sunucusu kullanmıyorsanız debug modunu kullanabilirsiniz
-    app.run(debug=True) 
+    # Debug modunu ortam değişkeniyle kontrol et
+    # Üretim ortamında ENV=production olarak ayarlanmalı
+    debug_mode = os.getenv('FLASK_ENV', 'development') == 'development'
+    app.run(debug=debug_mode, host='0.0.0.0', port=int(os.getenv('PORT', 5000))) 
