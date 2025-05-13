@@ -5,8 +5,8 @@ pymongo==4.5.0
 python-dotenv==1.0.0
 pdfplumber==0.10.1
 requests==2.31.0
-Werkzeug==3.0.6
-gunicorn==21.2.0
+Werkzeug==2.3.7
+gunicorn==23.0.0
 lmstudio==0.0.1
 pyyaml
 fastapi
