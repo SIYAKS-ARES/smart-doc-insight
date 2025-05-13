@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Doc Insight - LLM Testi{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card mb-4">
+        <div class="card-header {% if test_result.provider == 'lmstudio' %}bg-success{% else %}bg-primary{% endif %} text-white">
+            <h3 class="mb-0">
+                {% if test_result.provider == 'lmstudio' %}
+                    <i class="bi bi-braces"></i> LM Studio Test Sonuçları
+                {% else %}
+                    <i class="bi bi-robot"></i> Ollama Test Sonuçları
+                {% endif %}
+            </h3>
+            <p class="text-muted mb-0 mt-1 text-white-50">Test zamanı: {{ test_result.test_time }}</p>
+        </div>
+        <div class="card-body">
+            <div class="mb-4">
+                <h5>Bağlantı Durumu</h5>
+                <div class="alert {% if test_result.provider == 'lmstudio' %}alert-success{% else %}alert-primary{% endif %}">
+                    <i class="bi bi-info-circle"></i> Aktif LLM Sağlayıcısı: <strong>{{ test_result.provider_name }}</strong><br>
+                    <i class="bi bi-tag"></i> Model: <strong>{{ test_result.model_name }}</strong>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h5>Test Sorgusu Sonucu</h5>
+                {% if test_result.model_response %}
+                    <div class="alert alert-success mb-3">
+                        <i class="bi bi-check-circle-fill"></i> Model başarıyla yanıt döndürdü
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Yanıt</div>
+                        <div class="card-body">
+                            <pre class="mb-0">{{ test_result.model_response }}</pre>
+                        </div>
+                    </div>
+                {% elif test_result.error %}
+                    <div class="alert alert-danger">
+                        <i class="bi bi-x-circle-fill"></i> Hata: {{ test_result.error }}
+                    </div>
+                    
+                    {% if test_result.error_tip %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-lightbulb"></i> <strong>İpucu:</strong> {{ test_result.error_tip }}
+                        </div>
+                    {% endif %}
+                    
+                    {% if test_result.traceback %}
+                        <div class="card mt-3">
+                            <div class="card-header">Hata Ayrıntıları</div>
+                            <div class="card-body">
+                                <pre class="mb-0" style="max-height: 300px; overflow-y: auto;">{{ test_result.traceback }}</pre>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i> Test çalıştırılamadı
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-4">
+                <h5>Kurulum ve Kullanım Bilgileri</h5>
+                <div class="card">
+                    <div class="card-body">
+                        {% if test_result.provider == 'lmstudio' %}
+                            <h6>LM Studio'yu Ayarlamak İçin:</h6>
+                            <ol>
+                                <li>LM Studio uygulamasını <a href="https://lmstudio.ai" target="_blank">lmstudio.ai</a> adresinden indirin.</li>
+                                <li>LM Studio uygulamasını açın ve bir model yükleyin.</li>
+                                <li>Python bağlantısı için: <code>pip install lmstudio</code></li>
+                                <li>LM Studio uygulamasında Settings > API Server seçeneğini etkinleştirin.</li>
+                                <li>Model adını <a href="{{ url_for('teacher.select_llm_provider') }}">LLM Sağlayıcı Seçimi</a> sayfasından ayarlayın.</li>
+                            </ol>
+                        {% else %}
+                            <h6>Ollama'yı Ayarlamak İçin:</h6>
+                            <ol>
+                                <li>Ollama'yı <a href="https://ollama.ai/download" target="_blank">ollama.ai</a> adresinden indirin.</li>
+                                <li>Ollama servisini başlatın: <code>ollama serve</code></li>
+                                <li>Modeli indirin: <code>ollama pull {{ test_result.model_name }}</code></li>
+                                <li>Port ve host ayarlarını <a href="{{ url_for('teacher.select_llm_provider') }}">LLM Sağlayıcı Seçimi</a> sayfasından yapılandırın.</li>
+                            </ol>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <div class="row">
+                <div class="col">
+                    <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Panele Dön
+                    </a>
+                    <a href="{{ url_for('teacher.select_llm_provider') }}" class="btn btn-primary">
+                        <i class="bi bi-sliders"></i> LLM Sağlayıcı Ayarları
+                    </a>
+                </div>
+                <div class="col text-end">
+                    <a href="{{ url_for('teacher.test_llm') }}" class="btn {% if test_result.provider == 'lmstudio' %}btn-success{% else %}btn-primary{% endif %}">
+                        <i class="bi bi-arrow-clockwise"></i> Testi Tekrarla
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

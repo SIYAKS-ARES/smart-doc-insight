@@ -3,7 +3,76 @@
 {% block title %}Smart Doc Insight - Öğretmen Paneli{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Tüm Projeler</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Tüm Projeler</h1>
+    <div>
+        <a href="{{ url_for('teacher.select_llm_provider') }}" class="btn btn-primary">
+            <i class="bi bi-robot"></i> LLM Sağlayıcısı Seç
+        </a>
+    </div>
+</div>
+
+<!-- LLM Durum Bilgisi -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-robot"></i> LLM Sağlayıcı Durumu</h5>
+    </div>
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-1">
+                    {% if g.active_llm_provider == 'ollama' %}
+                        <i class="bi bi-robot"></i>
+                    {% elif g.active_llm_provider == 'lmstudio' %}
+                        <i class="bi bi-braces"></i>
+                    {% elif g.active_llm_provider == 'openai' %}
+                        <i class="bi bi-chat-dots"></i>
+                    {% elif g.active_llm_provider == 'gemini' %}
+                        <i class="bi bi-google"></i>
+                    {% elif g.active_llm_provider == 'claude' %}
+                        <i class="bi bi-chat-square-text"></i>
+                    {% else %}
+                        <i class="bi bi-question-circle"></i>
+                    {% endif %}
+                    
+                    Aktif LLM Sağlayıcısı: <strong class="{% if g.active_llm_available %}text-success{% else %}text-danger{% endif %}">{{ g.active_llm_provider|upper }}</strong>
+                </h5>
+                <p class="text-muted mb-0">
+                    Durum: 
+                    {% if g.active_llm_available %}
+                        <span class="badge bg-success"><i class="bi bi-check-circle"></i> Çalışıyor</span>
+                    {% else %}
+                        <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Kullanılamıyor</span>
+                    {% endif %}
+                </p>
+            </div>
+            
+            <div class="d-flex">
+                <a href="{{ url_for('teacher.select_llm_provider') }}" class="btn btn-sm btn-outline-primary me-2">
+                    <i class="bi bi-sliders"></i> Sağlayıcı Değiştir
+                </a>
+                
+                {% if g.active_llm_provider == 'ollama' %}
+                    <a href="{{ url_for('teacher.test_ollama') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-robot"></i> Ollama'yı Test Et
+                    </a>
+                {% elif g.active_llm_provider == 'lmstudio' %}
+                    <a href="{{ url_for('teacher.test_llm') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-braces"></i> LM Studio'yu Test Et
+                    </a>
+                {% elif g.active_llm_provider in ['openai', 'gemini', 'claude'] %}
+                    <a href="{{ url_for('teacher.test_api_llm') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-key"></i> API Bağlantısını Test Et
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('teacher.test_llm') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-check-circle"></i> Bağlantıyı Test Et
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
 
 {% if projects|length > 0 %}
     <div class="card">

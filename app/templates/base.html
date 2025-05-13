@@ -55,8 +55,45 @@
                                     <li><a class="dropdown-item" href="{{ url_for('teacher.fix_old_analyses') }}">
                                         <i class="bi bi-wrench"></i> Hatalı Analizleri Temizle
                                     </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <h6 class="dropdown-header">LLM Sağlayıcıları</h6>
+                                    </li>
+                                    <li><a class="dropdown-item" href="{{ url_for('teacher.select_llm_provider') }}">
+                                        <i class="bi bi-sliders"></i> LLM Sağlayıcı Seçimi
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <h6 class="dropdown-header"><i class="bi bi-cpu"></i> Yerel LLM Testleri</h6>
+                                    </li>
                                     <li><a class="dropdown-item" href="{{ url_for('teacher.test_ollama') }}">
-                                        <i class="bi bi-robot"></i> Ollama Testi
+                                        <i class="bi bi-robot"></i> Ollama Test
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('teacher.test_llm') }}">
+                                        <i class="bi bi-braces"></i>
+                                        {% if g.active_llm_provider == 'lmstudio' %}
+                                            LM Studio Test (Aktif)
+                                        {% else %}
+                                            LM Studio Test
+                                        {% endif %}
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <h6 class="dropdown-header"><i class="bi bi-cloud"></i> API Tabanlı LLM Testleri</h6>
+                                    </li>
+                                    <li><a class="dropdown-item" href="{{ url_for('teacher.test_api_llm') }}">
+                                        <i class="bi bi-key"></i> 
+                                        {% if g.active_llm_provider in ['openai', 'gemini', 'claude'] %}
+                                            {% if g.active_llm_provider == 'openai' %}
+                                                OpenAI API Test (Aktif)
+                                            {% elif g.active_llm_provider == 'gemini' %}
+                                                Gemini API Test (Aktif)
+                                            {% elif g.active_llm_provider == 'claude' %}
+                                                Claude API Test (Aktif)
+                                            {% endif %}
+                                        {% else %}
+                                            API LLM Test
+                                        {% endif %}
                                     </a></li>
                                 </ul>
                             </li>

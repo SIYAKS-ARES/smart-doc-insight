@@ -1,0 +1,50 @@
+PDF ANALİZ RAPORU
+=================
+Proje: {{ project.name }}
+Dosya: {{ project.files[file_index]['filename'] }}
+Analiz Tarihi: {{ analysis.get('analyzed_at') }}
+LLM Sistemi: {{ llm_info.get('provider_name', 'Bilinmiyor') }} / {{ llm_info.get('model', 'Bilinmiyor') }}
+
+GRUP ÜYELERİ
+------------
+{% for uye in analysis.get('content', {}).get('grup_uyeleri', []) %}
+• {{ uye }}
+{% else %}
+• Belirtilmemiş
+{% endfor %}
+
+SORUMLULUKLAR
+------------
+{% for sorumluluk in analysis.get('content', {}).get('sorumluluklar', []) %}
+• {{ sorumluluk }}
+{% else %}
+• Belirtilmemiş
+{% endfor %}
+
+DİYAGRAMLAR
+-----------
+{% for diyagram in analysis.get('content', {}).get('diyagramlar', []) %}
+• {{ diyagram }}
+{% else %}
+• Belirtilmemiş
+{% endfor %}
+
+BAŞLIKLAR
+---------
+{% for baslik in analysis.get('content', {}).get('basliklar', []) %}
+• {{ baslik }}
+{% else %}
+• Belirtilmemiş
+{% endfor %}
+
+EKSİKLER
+--------
+{% for eksik in analysis.get('content', {}).get('eksikler', []) %}
+• {{ eksik }}
+{% else %}
+• Belirtilmemiş
+{% endfor %}
+
+HAM ÇIKTI
+---------
+{{ analysis.get('content', {}).get('ham_sonuc', '') }} 

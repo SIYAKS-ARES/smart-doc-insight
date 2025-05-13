@@ -17,6 +17,11 @@
 - [x] CORS yapılandırması spesifik ve güvenli hale getirildi
 - [x] Tüm kaynaklara erişim (*) yerine belirli kaynaklar listelendi
 
+### 4. URL Yönlendirme Güvenliğinin Sağlanması
+- [x] URL yönlendirme işlemleri urlparse ile güvenli hale getirildi
+- [x] Harici URL'lere yönlendirmelerde güvenlik kontrolleri eklendi
+- [x] Geçersiz veya tehlikeli URL'ler engellendi
+
 ## Üretim Ortamında Güvenlik Ayarları
 
 Aşağıdaki ortam değişkenlerinin üretim ortamında doğru ayarlandığından emin olunmalıdır:
@@ -45,7 +50,7 @@ CORS_ALLOWED_ORIGINS=[gerçek alan adlarınız]
 
 ## Güncellemeler Sonrası Yapılması Gerekenler
 
-- [ ] PR'ların ana dala (main) birleştirilmesi
+- [x] PR'ların ana dala (main) birleştirilmesi
 - [ ] Test ortamında kapsamlı testlerin tamamlanması
 - [ ] Üretim ortamında güvenlik yapılandırmalarının doğrulanması
 - [ ] İlgili güvenlik açıklarının GitHub Dependabot uyarılarında kapatılmış olmasının kontrolü 
