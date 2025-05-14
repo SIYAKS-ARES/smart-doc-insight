@@ -79,7 +79,7 @@
                                 <!-- Dosya için bir analiz var mı kontrol et -->
                                 {% set has_analysis = false %}
                                 {% for analysis in project.analysis %}
-                                    {% if analysis.file_id == loop.index0 %}
+                                    {% if analysis.file_id == file.file_id %}
                                         {% set has_analysis = true %}
                                     {% endif %}
                                 {% endfor %}
