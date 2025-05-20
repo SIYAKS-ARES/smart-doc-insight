@@ -35,8 +35,13 @@ def get_db():
         # veritabanı gerektiren işlemlerde sorunlara yol açacaktır
         raise Exception(error_msg)
 
-def create_app():
+def create_app(config=None):
+    """Uygulama oluşturma fabrikası"""
     app = Flask(__name__)
+    
+    # Jinja2 eklentilerini etkinleştir
+    app.jinja_env.add_extension('jinja2.ext.do')
+    
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'gizli_anahtarinizi_degistirin')
     app.config['UPLOAD_FOLDER'] = os.getenv('UPLOAD_FOLDER', 'uploads')
     app.config['OLLAMA_BASE_URL'] = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')

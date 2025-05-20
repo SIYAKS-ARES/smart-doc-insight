@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app, jsonify
+from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app, jsonify, g
 from flask_login import login_required, current_user
 from bson.objectid import ObjectId
 import os
@@ -17,6 +17,18 @@ from app.utils.api_key_manager import APIKeyManager
 from app.utils.auth_utils import teacher_required
 
 teacher = Blueprint('teacher', __name__)
+
+@teacher.before_request
+def set_debug_mode():
+    """Her istek öncesinde çalışır ve debug_mode değişkenini g nesnesine ekler."""
+    # Üretim ortamında False olmalı, geliştirme ortamında True olabilir
+    g.debug_mode = current_app.config.get('DEBUG', False)
+    
+    # Öğretmenler için debug_mode'u etkinleştir (isteğe bağlı)
+    if current_user.is_authenticated and current_user.is_teacher():
+        # Bu bayrağı query string'den al (örn: ?debug=1)
+        if request.args.get('debug') == '1':
+            g.debug_mode = True
 
 @teacher.route('/teacher/dashboard')
 @login_required
@@ -161,7 +173,8 @@ def analyze_file(project_id, file_index):
     flash(f'{provider_display_name} sistemi ile "{model_name}" modeli kullanılarak analiz yapılıyor...', 'info')
     
     try:
-        # LLM ile analiz yap
+        # Varsayılan analiz için DEFAULT_ANALYSIS_CATEGORIES ve DEFAULT_PROMPT_TEMPLATE kullanılır
+        # analyze_text_with_llm fonksiyonu parametresiz çağrıldığında varsayılan başlıkları kullanır
         analysis_result = analyze_text_with_llm(text_chunks)
         
         # Analiz sonucuna LLM sağlayıcı ve model bilgilerini ekle
@@ -224,39 +237,69 @@ def download_analysis(project_id, file_index):
             return f"{indent}• Belirtilmemiş"
         return "\n".join([f"{indent}• {item}" for item in items])
     
-    # Analizi metin dosyası olarak dışa aktar
-    response_text = f"""
+    # Özel başlık analizi mi kontrol et
+    custom_headings = analysis.get('content', {}).get('custom_headings', [])
+    is_custom_analysis = len(custom_headings) > 0
+    
+    # Analiz raporunu başlat
+    report_sections = [
+        f"""
 PDF ANALİZ RAPORU
 =================
 Proje: {project.name}
 Dosya: {project.files[file_index]['filename']}
 Analiz Tarihi: {formatted_date}
 LLM Sistemi: {provider_name} / {model_name}
-
-GRUP ÜYELERİ
-------------
-{format_list(analysis.get('content', {}).get('grup_uyeleri', []))}
-
-SORUMLULUKLAR
-------------
-{format_list(analysis.get('content', {}).get('sorumluluklar', []))}
-
-DİYAGRAMLAR
------------
-{format_list(analysis.get('content', {}).get('diyagramlar', []))}
-
-BAŞLIKLAR
----------
-{format_list(analysis.get('content', {}).get('basliklar', []))}
-
-EKSİKLER
---------
-{format_list(analysis.get('content', {}).get('eksikler', []))}
-
-HAM ÇIKTI
----------
-{analysis.get('content', {}).get('ham_sonuc', '')}
-    """
+"""
+    ]
+    
+    # Özel başlıklarla analiz yapılmışsa, o başlıkları göster
+    if is_custom_analysis:
+        report_sections.append("\nÖZEL BAŞLIKLARLA ANALİZ\n")
+        
+        for i, heading in enumerate(custom_headings):
+            section_title = heading.get('title', f"Başlık {i+1}")
+            section_desc = heading.get('description', '')
+            category_key = f"custom_{i+1}"
+            
+            # Başlık bölümünü ekle
+            section_content = f"\n{section_title.upper()}\n"
+            section_content += "-" * len(section_title) + "\n"
+            
+            # Açıklama varsa ekle
+            if section_desc:
+                section_content += f"(Not: {section_desc})\n"
+                
+            # Bu başlığa ait analiz sonuçlarını ekle
+            section_items = analysis.get('content', {}).get(category_key, [])
+            section_content += format_list(section_items)
+            
+            report_sections.append(section_content)
+    else:
+        # Standart başlıklarla analiz için klasik format
+        section_mappings = [
+            ("GRUP ÜYELERİ", "grup_uyeleri"),
+            ("SORUMLULUKLAR", "sorumluluklar"),
+            ("DİYAGRAMLAR", "diyagramlar"),
+            ("BAŞLIKLAR", "basliklar"),
+            ("EKSİKLER", "eksikler")
+        ]
+        
+        for title, key in section_mappings:
+            section_content = f"\n{title}\n"
+            section_content += "-" * len(title) + "\n"
+            section_items = analysis.get('content', {}).get(key, [])
+            section_content += format_list(section_items)
+            report_sections.append(section_content)
+    
+    # En son ham çıktıyı ekle
+    report_sections.append("""
+ÖZET
+----
+""" + analysis.get('content', {}).get('ham_sonuc', ''))
+    
+    # Analizi metin dosyası olarak dışa aktar
+    response_text = "\n".join(report_sections)
     
     # Dosya adını oluştur
     filename = f"analiz_{project.name.replace(' ', '_')}_{file_index}.txt"
@@ -713,3 +756,246 @@ def test_api_llm():
         selected_model='',
         test_result=None
     ) 
+
+@teacher.route('/teacher/projects/<project_id>/file/<int:file_index>/analyze-custom', methods=['POST'])
+@login_required
+def analyze_file_with_custom_headings(project_id, file_index):
+    if not current_user.is_teacher():
+        flash('Bu sayfaya erişim yetkiniz yok', 'danger')
+        return redirect(url_for('main.index'))
+    
+    # Debug dizininin varlığını kontrol et, yoksa oluştur
+    debug_dir = '/tmp/llm_debug'
+    if not os.path.exists(debug_dir):
+        os.makedirs(debug_dir)
+    
+    # Debug dosyasına bilgi yaz
+    with open('/tmp/llm_debug/info.txt', 'a', encoding='utf-8') as f:
+        f.write("\n\n--- CUSTOM HEADINGS ANALIZ BAŞLADI ---\n")
+        f.write(f"Proje ID: {project_id}, Dosya indeksi: {file_index}\n")
+    
+    # Formdan gelen başlık verilerini al
+    heading_titles = request.form.getlist('heading_title[]')
+    heading_descriptions = request.form.getlist('heading_description[]')
+    
+    # Debug log
+    with open('/tmp/llm_debug/info.txt', 'a', encoding='utf-8') as f:
+        f.write(f"Başlık sayısı: {len(heading_titles)}\n")
+        f.write(f"Başlıklar: {heading_titles}\n")
+        f.write(f"Açıklamalar: {heading_descriptions}\n")
+    
+    # Boş başlıkları kontrol et
+    if not heading_titles or not any(title.strip() for title in heading_titles):
+        flash('En az bir başlık girmelisiniz', 'danger')
+        with open('/tmp/llm_debug/info.txt', 'a', encoding='utf-8') as f:
+            f.write("HATA: Başlık girişi yok\n")
+        return redirect(url_for('teacher.view_file', project_id=project_id, file_index=file_index))
+    
+    # Başlık ve açıklamaları birleştirerek özel kategoriler oluştur
+    custom_categories = {}
+    custom_headings_data = []
+    
+    for i, title in enumerate(heading_titles):
+        title = title.strip()
+        if title:  # Boş başlıkları atla
+            # Eğer açıklama varsa başlığa ekle, yoksa sadece başlığı kullan
+            description = heading_descriptions[i].strip() if i < len(heading_descriptions) else ""
+            category_key = f"custom_{i+1}"
+            
+            # İki nokta üst üste içeren başlıklar için özel işlem
+            if not title.endswith(':'):
+                # Başlığı LLM'e sorulacak soru formatında kullan
+                custom_categories[category_key] = title
+            else:
+                # İki nokta üst üste içeren başlığı temizleyerek kullan
+                custom_categories[category_key] = title[:-1]
+            
+            # Başlık ve açıklama bilgilerini kaydet
+            custom_headings_data.append({
+                'title': title,
+                'description': description
+            })
+    
+    # Debug log
+    with open('/tmp/llm_debug/info.txt', 'a', encoding='utf-8') as f:
+        f.write(f"Oluşturulan kategoriler: {custom_categories}\n")
+        f.write(f"Başlık verileri: {custom_headings_data}\n")
+    
+    # LLM sağlayıcı bilgilerini al
+    llm_provider = os.getenv('LLM_PROVIDER', 'ollama')
+    
+    # Sağlayıcıya göre standart isim ve model bilgilerini ayarla
+    provider_display_names = {
+        'ollama': 'Ollama',
+        'lmstudio': 'LM Studio',
+        'openai': 'OpenAI GPT',
+        'gemini': 'Google Gemini',
+        'claude': 'Anthropic Claude'
+    }
+    
+    # Sağlayıcı görünen adını al, bulunamazsa teknik adını kullan
+    provider_display_name = provider_display_names.get(llm_provider, llm_provider.capitalize())
+    
+    # Model bilgilerini al
+    if llm_provider == 'ollama':
+        # Ollama için model kontrolü
+        if not check_ollama_availability():
+            flash('Ollama LLM servisi şu anda çalışmıyor. Lütfen servisin çalıştığından emin olun veya başka bir LLM sağlayıcısı seçin.', 'danger')
+            return redirect(url_for('teacher.view_file', project_id=project_id, file_index=file_index))
+        model_name = os.getenv('OLLAMA_MODEL', 'mistral:latest')
+    elif llm_provider == 'lmstudio':
+        # LM Studio için model kontrolü
+        from app.utils.llm_utils import check_lmstudio_availability
+        if not check_lmstudio_availability():
+            flash('LM Studio servisi şu anda çalışmıyor. Lütfen LM Studio uygulamasının çalıştığından ve API Server özelliğinin etkin olduğundan emin olun.', 'danger')
+            return redirect(url_for('teacher.view_file', project_id=project_id, file_index=file_index))
+        model_name = os.getenv('LM_STUDIO_MODEL', 'deepseek-coder-v2-lite-instruct-mlx')
+    elif llm_provider == 'openai':
+        # OpenAI için model ve API anahtarı kontrolü
+        from app.utils.api_key_manager import APIKeyManager
+        api_key = APIKeyManager.get_api_key('openai')
+        if not api_key:
+            flash('OpenAI API anahtarı bulunamadı. Lütfen API anahtarınızı ayarlar sayfasından ekleyin.', 'danger')
+            return redirect(url_for('teacher.view_file', project_id=project_id, file_index=file_index))
+        model_name = APIKeyManager.get_model('openai') or os.getenv('OPENAI_MODEL', 'gpt-3.5-turbo')
+    elif llm_provider == 'gemini':
+        # Gemini için model ve API anahtarı kontrolü
+        from app.utils.api_key_manager import APIKeyManager
+        api_key = APIKeyManager.get_api_key('gemini')
+        if not api_key:
+            flash('Google Gemini API anahtarı bulunamadı. Lütfen API anahtarınızı ayarlar sayfasından ekleyin.', 'danger')
+            return redirect(url_for('teacher.view_file', project_id=project_id, file_index=file_index))
+        model_name = APIKeyManager.get_model('gemini') or os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
+    elif llm_provider == 'claude':
+        # Claude için model ve API anahtarı kontrolü
+        from app.utils.api_key_manager import APIKeyManager
+        api_key = APIKeyManager.get_api_key('claude')
+        if not api_key:
+            flash('Anthropic Claude API anahtarı bulunamadı. Lütfen API anahtarınızı ayarlar sayfasından ekleyin.', 'danger')
+            return redirect(url_for('teacher.view_file', project_id=project_id, file_index=file_index))
+        model_name = APIKeyManager.get_model('claude') or os.getenv('CLAUDE_MODEL', 'claude-3-opus-20240229')
+    else:
+        flash('Bilinmeyen LLM sağlayıcısı. Lütfen geçerli bir sağlayıcı seçin.', 'danger')
+        return redirect(url_for('teacher.view_file', project_id=project_id, file_index=file_index))
+    
+    # Projeyi al
+    project = Project.get_by_id(project_id)
+    
+    if not project or file_index >= len(project.files):
+        flash('Dosya bulunamadı', 'danger')
+        return redirect(url_for('teacher.view_project', project_id=project_id))
+    
+    file_data = project.files[file_index]
+    
+    # PDF'den metin çıkar
+    pdf_text = extract_text_from_pdf(file_data['path'])
+    
+    if not pdf_text:
+        flash('PDF\'den metin çıkarılamadı', 'danger')
+        return redirect(url_for('teacher.view_file', project_id=project_id, file_index=file_index))
+    
+    # Metni parçalara böl (LLM token limiti için)
+    text_chunks = chunk_text(pdf_text)
+    
+    # Özel başlıklarla dinamik prompt oluştur
+    custom_prompt = "Bu PDF bir öğrenci projesidir. İçeriği analiz et ve şu başlıkların dökümanda olup olmadığını kontrol et:\n"
+    for i, title in enumerate(heading_titles):
+        if title.strip():
+            # Açıklamayı kontrol et
+            description = heading_descriptions[i].strip() if i < len(heading_descriptions) else ""
+            
+            # Başlık zaten iki nokta üst üste içeriyorsa olduğu gibi kullan
+            if title.strip().endswith(':'):
+                prompt_title = title.strip()
+            else:
+                prompt_title = f"{title.strip()}"
+                
+            # Başlığı ekle
+            custom_prompt += f"    • {prompt_title}"
+            
+            # Açıklama varsa, açıklamayı başlığa ekle
+            if description:
+                custom_prompt += f" ({description})"
+                
+            custom_prompt += "\n"
+    
+    custom_prompt += """    
+    İşte PDF'in içeriği:
+    
+    {content}
+    
+    Yanıtını aşağıdaki şekilde yapılandır:
+    1. Her başlık için şu formatta yanıt ver:
+       - Eğer başlıkla ilgili içerik varsa: "Evet, dökümanda bu başlığa yer verilmiştir." ifadesiyle başla ve 1-3 cümlelik kısa bir özet sun.
+       - Eğer başlıkla ilgili içerik yoksa: "Bu başlıkla ilgili veri bulunamadı" ifadesini kullan.
+    2. Her bölümü başlık adıyla AYNEN başlat ve başlık sonuna ":" ekle (örneğin "Proje Özeti:" şeklinde).
+    3. Yanıtlarını kısa ve öz tut, uzun açıklamalardan kaçın.
+    4. Her başlığı yeni bir satırda başlat.
+    5. Özet bilgilerini maddeler halinde değil, düz metin olarak 1-3 cümle ile sınırla.
+    6. Başlık ile yanıt arasına yeni satır veya boşluk ekleme.
+    
+    ÖRNEK YANIT FORMATI:
+    Proje Özeti: Evet, dökümanda bu başlığa yer verilmiştir. [Kısa özet burada yer alacak]
+    Problem Tanımı: Bu başlıkla ilgili veri bulunamadı.
+    Çözüm Önerisi: Evet, dökümanda bu başlığa yer verilmiştir. [Kısa özet burada yer alacak]
+    """
+    
+    # Debug log
+    with open('/tmp/llm_debug/info.txt', 'a', encoding='utf-8') as f:
+        f.write(f"Oluşturulan prompt: {custom_prompt}\n")
+    
+    # LLM bilgisini kullanıcıya göster
+    flash(f'{provider_display_name} sistemi ile "{model_name}" modeli kullanılarak özel başlıklarla analiz yapılıyor...', 'info')
+    
+    try:
+        # LLM ile analiz yap (özel kategoriler ve özel prompt ile)
+        analysis_result = analyze_text_with_llm(text_chunks, categories=custom_categories, custom_prompt=custom_prompt)
+        
+        # Debug log
+        with open('/tmp/llm_debug/info.txt', 'a', encoding='utf-8') as f:
+            f.write(f"Analiz sonucu: {analysis_result}\n")
+        
+        # Analiz sonucuna LLM sağlayıcı ve model bilgilerini ekle
+        analysis_result['llm_info'] = {
+            'provider': llm_provider,
+            'provider_name': provider_display_name,
+            'model': model_name,
+        }
+        
+        # Başlık ve açıklamaları da kaydet
+        analysis_result['custom_headings'] = custom_headings_data
+        
+        # Debug log
+        with open('/tmp/llm_debug/info.txt', 'a', encoding='utf-8') as f:
+            f.write(f"Sonuca eklenen başlık verileri: {custom_headings_data}\n")
+        
+        # Analizi projeye ekle
+        project.add_analysis(file_index, analysis_result)
+        project.save()
+        
+        with open('/tmp/llm_debug/info.txt', 'a', encoding='utf-8') as f:
+            f.write("Analiz başarıyla kaydedildi\n")
+        
+        flash(f'Dosya başarıyla özel başlıklarla analiz edildi ({provider_display_name} - {model_name})', 'success')
+    except Exception as e:
+        flash(f'Analiz sırasında hata oluştu: {str(e)}', 'danger')
+        print(f"Analiz hatası: {str(e)}")
+        print(traceback.format_exc())
+        
+        # Debug log
+        with open('/tmp/llm_debug/info.txt', 'a', encoding='utf-8') as f:
+            f.write(f"HATA: {str(e)}\n")
+            f.write(f"Traceback: {traceback.format_exc()}\n")
+    
+    with open('/tmp/llm_debug/info.txt', 'a', encoding='utf-8') as f:
+        f.write("--- CUSTOM HEADINGS ANALIZ TAMAMLANDI ---\n")
+    
+    return redirect(url_for('teacher.view_file', project_id=project_id, file_index=file_index)) 
+
+@teacher.route('/teacher/projects/<project_id>/file/<int:file_index>/view_debug', methods=['GET'])
+@login_required
+@teacher_required
+def view_file_debug(project_id, file_index):
+    """Hata ayıklama bilgilerini göstermek için özel bir rota."""
+    # Normal dosya görüntüleme sayfasına yönlendir, ama debug parametresiyle
+    return redirect(url_for('teacher.view_file', project_id=project_id, file_index=file_index, debug=1)) 

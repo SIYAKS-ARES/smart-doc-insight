@@ -249,7 +249,48 @@ class APIKeyManager:
             "gemini": "gemini-2.0-flash",
             "claude": "claude-3-opus-20240229"
         }
+        return defaults.get(provider, "")
         
-        # Çevre değişkenlerindeki değeri döndür veya varsayılan değeri kullan
-        env_var_name = f"{provider.upper()}_MODEL"
-        return os.environ.get(env_var_name, defaults.get(provider, "")) 
+    @staticmethod
+    def update_model(provider, model, user_id=None):
+        """
+        Belirli bir sağlayıcı için kullanılan modeli günceller
+        
+        Args:
+            provider: API sağlayıcı adı (openai, gemini, claude)
+            model: Model adı
+            user_id: Kullanıcı ID'si (None ise current_user kullanılır)
+            
+        Returns:
+            bool: Başarılı mı?
+        """
+        try:
+            # Kullanıcı ID'sini belirle
+            if user_id is None and current_user and current_user.is_authenticated:
+                # current_user'da id değil _id kullanılıyor
+                user_id = str(current_user._id) if hasattr(current_user, '_id') else current_user.get_id()
+            
+            if not user_id:
+                logger.warning(f"Model güncellenemedi: Geçerli bir kullanıcı ID'si yok")
+                return False
+            
+            # Log kaydı başlat
+            logger.info(f"Model bilgisi güncelleniyor - sağlayıcı: {provider}, model: {model}, kullanıcı: {user_id}")
+            
+            # API anahtarı objesini bul
+            api_key_obj = APIKey.get_by_user_provider(user_id, provider)
+            
+            if not api_key_obj:
+                logger.warning(f"Model güncellenemedi: {provider} için API anahtarı bulunamadı, kullanıcı: {user_id}")
+                return False
+            
+            # Model bilgisini güncelle
+            api_key_obj.model = model
+            api_key_obj.save()
+            
+            logger.info(f"{provider} model bilgisi başarıyla güncellendi: {model}, kullanıcı: {user_id}")
+            return True
+            
+        except Exception as e:
+            logger.exception(f"Model güncellenirken hata: {str(e)}")
+            return False 
