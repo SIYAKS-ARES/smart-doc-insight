@@ -80,11 +80,24 @@ def view_file(project_id, file_index):
         if "model 'mistral:instruct' not found" in analysis["content"]["ham_sonuc"]:
             flash('Bu analiz eski model ile yapılmış ve hatalı görünüyor. Lütfen yeniden analiz edin.', 'warning')
     
+    # Şablon için os ve APIKeyManager modüllerini ekle
+    from app.utils.api_key_manager import APIKeyManager
+    
+    # Model bilgilerini al
+    models = {
+        'ollama_model': os.getenv('OLLAMA_MODEL', 'mistral:latest'),
+        'lmstudio_model': os.getenv('LM_STUDIO_MODEL', 'deepseek-coder-v2-lite-instruct-mlx'),
+        'openai_model': APIKeyManager.get_model('openai') or os.getenv('OPENAI_MODEL', 'gpt-3.5-turbo'),
+        'gemini_model': APIKeyManager.get_model('gemini') or os.getenv('GEMINI_MODEL', 'gemini-2.0-flash'),
+        'claude_model': APIKeyManager.get_model('claude') or os.getenv('CLAUDE_MODEL', 'claude-3-opus-20240229')
+    }
+    
     return render_template('teacher/view_file.html', 
                           project=project, 
                           file_data=file_data,
                           file_index=file_index,
-                          analysis=analysis)
+                          analysis=analysis,
+                          models=models)
 
 @teacher.route('/teacher/projects/<project_id>/file/<int:file_index>/analyze', methods=['POST'])
 @login_required
@@ -561,56 +574,89 @@ def fix_old_analyses():
         flash('Bu sayfaya erişim yetkiniz yok', 'danger')
         return redirect(url_for('main.index'))
     
-    # MongoDB'deki eski analizleri düzeltelim
-    fixed_count = 0
-    error_count = 0
-    updated_count = 0
-    
     if request.method == 'POST':
-        projects = Project.get_all()
-        
-        for project in projects:
-            # 1. Mevcut dosyalara benzersiz ID ekle (eğer yoksa)
-            for i, file_data in enumerate(project.files):
-                if 'file_id' not in file_data or not file_data['file_id']:
-                    project.files[i]['file_id'] = str(uuid.uuid4())
-                    updated_count += 1
+        try:
+            # Tüm projeleri getir
+            projects = Project.get_all()
+            fixed_count = 0
+            updated_ids_count = 0
+            updated_names_count = 0
+            updated_status_count = 0
+            api_based_count = 0
+            custom_heading_count = 0
             
-            # 2. Hatalı analizleri temizle
-            for i, analysis in enumerate(project.analysis[:]):  # Listeyi kopyala çünkü içeriğini değiştireceğiz
-                content = analysis.get('content', {})
-                ham_sonuc = content.get('ham_sonuc', '')
+            for project in projects:
+                # Projenin tüm dosyalarını kontrol et
+                for file_index, file in enumerate(project.files):
+                    # Dosya ID'si yoksa oluştur
+                    file_id_fixed = False
+                    if not file.get('file_id'):
+                        file['file_id'] = str(uuid.uuid4())
+                        file_id_fixed = True
+                        updated_ids_count += 1
+                    
+                    # Dosya için analiz var mı kontrol et
+                    for analysis in project.analysis:
+                        # Herhangi bir eşleşme durumu kontrol et
+                        if (analysis.get('file_index') == file_index or 
+                           (analysis.get('file_name') and analysis.get('file_name') == file.get('filename')) or
+                           (analysis.get('file_id') and analysis.get('file_id') == file.get('file_id'))):
+                            
+                            # file_id güncelleme
+                            if not analysis.get('file_id') or (file_id_fixed and analysis.get('file_index') == file_index):
+                                analysis['file_id'] = file.get('file_id')
+                                updated_ids_count += 1
+                            
+                            # file_name güncelleme
+                            if not analysis.get('file_name'):
+                                analysis['file_name'] = file.get('filename')
+                                updated_names_count += 1
+                                
+                            # Durum bilgisi ekle
+                            if not analysis.get('status'):
+                                analysis['status'] = 'completed'
+                                updated_status_count += 1
+                            
+                            # Analiz türlerini kontrol et ve güncelle
+                            content = analysis.get('content', {})
+                            
+                            # API tabanlı analizleri kontrol et
+                            if content.get('llm_info', {}).get('provider') in ['openai', 'gemini', 'claude']:
+                                # API tabanlı analiz, özel alanları kontrol et
+                                api_based_count += 1
+                            
+                            # Özel başlıklı analizleri kontrol et
+                            if content.get('custom_headings', []):
+                                custom_heading_count += 1
+                                
+                            fixed_count += 1
                 
-                # "mistral:instruct not found" hatası içeren analizleri temizle
-                if "model 'mistral:instruct' not found" in ham_sonuc:
-                    try:
-                        # Analizi kaldır
-                        project.analysis.remove(analysis)
-                        fixed_count += 1
-                        print(f"Hatalı analiz temizlendi: Proje {project.name}")
-                    except Exception as e:
-                        print(f"Hata: {str(e)}")
-                        error_count += 1
+                # Değişiklikleri kaydet
+                project.save()
             
-            # 3. Eski analiz kayıtlarında geçiş - file_id kullan
-            for i, analysis in enumerate(project.analysis[:]):
-                file_index = analysis.get('file_index')
+            # Detaylı rapor oluştur
+            report_message = f'Toplam {fixed_count} analiz kaydı işlendi:'
+            if updated_ids_count > 0:
+                report_message += f' {updated_ids_count} benzersiz ID güncellendi,'
+            if updated_names_count > 0:
+                report_message += f' {updated_names_count} dosya adı güncellendi,'
+            if updated_status_count > 0:
+                report_message += f' {updated_status_count} durum bilgisi eklendi,'
+            if api_based_count > 0:
+                report_message += f' {api_based_count} API tabanlı analiz güncellendi,'
+            if custom_heading_count > 0:
+                report_message += f' {custom_heading_count} özel başlıklı analiz güncellendi,'
+            
+            # Son virgülü kaldır
+            if report_message.endswith(','):
+                report_message = report_message[:-1]
                 
-                # file_id yoksa ve file_index varsa, file_id'yi ayarla
-                if ('file_id' not in analysis or not analysis['file_id']) and file_index is not None:
-                    # Belirtilen dosyayı bul
-                    if file_index < len(project.files):
-                        file_id = project.files[file_index].get('file_id')
-                        if file_id:
-                            project.analysis[i]['file_id'] = file_id
-                            updated_count += 1
-            
-            # Projeyi kaydet
-            project.save()
-            
-        
-        flash(f'Toplam {fixed_count} hatalı analiz temizlendi, {updated_count} kayıt güncellendi. {error_count} hata oluştu.', 'success')
-        return redirect(url_for('teacher.dashboard'))
+            flash(report_message, 'success')
+            return redirect(url_for('teacher.dashboard'))
+        except Exception as e:
+            flash(f'Analiz bakımı yapılırken hata oluştu: {str(e)}', 'danger')
+            print(f"Analiz bakım hatası: {str(e)}")
+            print(traceback.format_exc())
     
     return render_template('teacher/fix_analyses.html')
 

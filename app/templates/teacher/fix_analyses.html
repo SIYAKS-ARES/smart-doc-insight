@@ -1,40 +1,191 @@
 {% extends "base.html" %}
 
-{% block title %}Smart Doc Insight - Hatalı Analizleri Temizle{% endblock %}
+{% block title %}Smart Doc Insight - Analiz Bakımı{% endblock %}
+
+{% block styles %}
+<link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    .hero-section.compact {
+        padding: 1.5rem 0;
+        margin-bottom: 1.5rem;
+    }
+    .hero-section.compact .hero-title {
+        font-size: 1.8rem;
+        margin-bottom: 0.25rem;
+    }
+    .hero-subtitle {
+        font-size: 1rem;
+        margin-bottom: 0;
+        opacity: 0.9;
+    }
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
+        border: none;
+        transition: all 0.3s ease;
+    }
+    .card:hover {
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+    .maintenance-item {
+        padding: 1rem;
+        border-left: 3px solid var(--primary-color);
+        background-color: rgba(59, 130, 246, 0.05);
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+    .btn-primary {
+        box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3);
+    }
+    .feature-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.2));
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
+<!-- Hero Bölümü -->
+<section class="hero-section compact">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="hero-title">Analiz Bakım Aracı</h1>
+                <div class="hero-subtitle">
+                    <span class="meta-info">
+                        <i class="bi bi-tools info-icon"></i> 
+                        Veri tutarlılığı ve bakım işlemleri için otomatik araç
+                    </span>
+                </div>
+            </div>
+            <div>
+                <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-back">
+                    <i class="bi bi-arrow-left"></i> Panele Dön
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card mb-4">
-                <div class="card-header">
-                    <h3>Eski Model Analizlerini Temizle</h3>
+                <div class="card-header d-flex align-items-center">
+                    <i class="bi bi-tools fs-4 text-primary me-2"></i>
+                    <h5 class="mb-0">Analiz Bakım İşlemleri</h5>
                 </div>
                 <div class="card-body">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle-fill"></i>
-                        <strong>Bu araç ne yapar?</strong>
-                        <p>
-                            Bu araç, eski "mistral:instruct" modeli ile yapılmış ve hata içeren analizleri veritabanından temizler. 
-                            Temizlenen analizler yerine dosyaları yeniden analiz edebilirsiniz.
-                        </p>
+                    <div class="alert alert-info border-0 shadow-sm">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="bi bi-info-circle-fill fs-3 text-primary"></i>
+                            </div>
+                            <div>
+                                <h5><strong>Bu araç ne yapar?</strong></h5>
+                                <p>Bu araç, analiz kayıtlarınızın tutarlılığını sağlar ve bakım işlemlerini gerçekleştirir.</p>
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="alert alert-warning">
-                        <i class="bi bi-exclamation-triangle-fill"></i>
-                        <strong>Uyarı!</strong>
-                        <p>
-                            Bu işlem geri alınamaz. Silinen analizler kalıcı olarak kaldırılacaktır.
-                        </p>
+                    <div class="row mt-4">
+                        <div class="col-md-6 mb-3">
+                            <div class="maintenance-item">
+                                <div class="feature-icon">
+                                    <i class="bi bi-database-check"></i>
+                                </div>
+                                <h5>Dosya Bilgileri</h5>
+                                <p class="text-muted">Tüm analizlere dosya ismi ve benzersiz ID'ler eklenir</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="maintenance-item">
+                                <div class="feature-icon">
+                                    <i class="bi bi-card-checklist"></i>
+                                </div>
+                                <h5>Durum Kontrolü</h5>
+                                <p class="text-muted">Eksik durum bilgileri tamamlanır ve güncellenir</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="maintenance-item">
+                                <div class="feature-icon">
+                                    <i class="bi bi-clipboard-data"></i>
+                                </div>
+                                <h5>Veri Temizliği</h5>
+                                <p class="text-muted">Hatalı analiz kayıtları düzeltilir ve optimizasyon yapılır</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="maintenance-item">
+                                <div class="feature-icon">
+                                    <i class="bi bi-arrow-repeat"></i>
+                                </div>
+                                <h5>Format Uyumluluğu</h5>
+                                <p class="text-muted">Farklı LLM formatları arasında veri tutarlılığı sağlanır</p>
+                            </div>
+                        </div>
                     </div>
                     
-                    <form action="{{ url_for('teacher.fix_old_analyses') }}" method="POST" class="mt-4" onsubmit="return confirm('Tüm hatalı analizleri silmek istediğinize emin misiniz?');">
-                        <button type="submit" class="btn btn-danger">
-                            <i class="bi bi-trash"></i> Hatalı Analizleri Temizle
-                        </button>
-                        <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-secondary ms-2">
-                            <i class="bi bi-x"></i> İptal
-                        </a>
+                    <div class="alert alert-warning border-0 shadow-sm mt-3">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="bi bi-exclamation-triangle-fill fs-3 text-warning"></i>
+                            </div>
+                            <div>
+                                <h5><strong>Ne zaman kullanmalısınız?</strong></h5>
+                                <ul>
+                                    <li>Analiz edilmiş dosyaların durumu hatalı gösteriliyorsa</li>
+                                    <li>Analiz durumu "Analiz Bekliyor" olarak görünüp aslında tamamlanmışsa</li>
+                                    <li>Sisteme yeni bir LLM modeli eklendiğinde</li>
+                                    <li>Dosya ve analiz eşleştirmelerinde sorunlar yaşıyorsanız</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card bg-light border-0 mb-4 mt-4">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-lightbulb-fill text-warning me-2"></i>
+                                <h5 class="card-title mb-0">Nasıl Çalışır?</h5>
+                            </div>
+                            <ol>
+                                <li>Tüm projelerdeki analizleri tarar</li>
+                                <li>Eksik dosya ID'lerini ve isimlerini tamamlar</li>
+                                <li>Analizlerde "completed" durum bilgisi ekler</li>
+                                <li>Tüm özel başlıklı ve API tabanlı analizleri uyumlu hale getirir</li>
+                            </ol>
+                            <p class="text-muted small mb-0">
+                                <i class="bi bi-info-circle"></i> Bu işlem var olan hiçbir içeriği silmez, sadece analiz kayıtlarını günceller.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <form action="{{ url_for('teacher.fix_old_analyses') }}" method="POST" class="mt-4" onsubmit="return confirm('Analiz bakımını başlatmak istediğinize emin misiniz?');">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-tools"></i> Analiz Bakımını Başlat
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>

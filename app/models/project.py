@@ -73,10 +73,13 @@ class Project:
         # Hata ayıklama: Tarih kaydedilmeden önce kontrol et
         print(f"Kaydedilen analiz tarihi: {current_time}")
         
-        # Dosyanın benzersiz ID'sini al
+        # Dosya bilgilerini al
         file_id = None
+        file_name = None
         if file_index < len(self.files):
-            file_id = self.files[file_index].get('file_id')
+            file_data = self.files[file_index]
+            file_id = file_data.get('file_id')
+            file_name = file_data.get('filename')
             
             # Eğer dosyanın file_id'si yoksa, ona bir ID ekleyin
             if not file_id:
@@ -86,12 +89,17 @@ class Project:
         # Eski analizleri temizle (aynı dosya için)
         if file_id:
             self.analysis = [a for a in self.analysis if a.get('file_id') != file_id]
+        else:
+            # file_id yoksa file_index ile eşleşenleri temizle
+            self.analysis = [a for a in self.analysis if a.get('file_index') != file_index]
         
         analysis_data = {
             "file_id": file_id,
-            "file_index": file_index,  # Geriye dönük uyumluluk için
+            "file_index": file_index,
+            "file_name": file_name,  # Dosya adını da ekleyelim
             "content": content,
-            "analyzed_at": current_time
+            "analyzed_at": current_time,
+            "status": "completed"  # Açık bir durum bilgisi ekleyelim
         }
         
         if self.analysis is None:
@@ -105,20 +113,53 @@ class Project:
         if file_index < 0 or file_index >= len(self.files):
             return None
             
-        file_id = self.files[file_index].get('file_id')
+        file_data = self.files[file_index]
+        file_id = file_data.get('file_id')
+        file_name = file_data.get('filename')
         
-        # Önce file_id ile bulmayı dene
+        # 1. Önce file_id ile bulmayı dene
         if file_id:
             for analysis in self.analysis:
                 if analysis.get('file_id') == file_id:
                     return analysis
         
-        # Geriye dönük uyumluluk için file_index ile dene
+        # 2. Geriye dönük uyumluluk için file_index ile dene
         for analysis in self.analysis:
             if analysis.get('file_index') == file_index:
                 return analysis
+        
+        # 3. Son çare olarak dosya adıyla eşleşmeyi dene
+        if file_name:
+            for analysis in self.analysis:
+                if analysis.get('file_name') == file_name:
+                    return analysis
                 
         return None
+
+    def is_file_analyzed(self, file_index):
+        """Dosyanın analiz edilip edilmediğini kontrol eder"""
+        if file_index < 0 or file_index >= len(self.files):
+            return False
+            
+        file_data = self.files[file_index]
+        file_id = file_data.get('file_id')
+        file_name = file_data.get('filename')
+        
+        # Herhangi bir eşleşme durumunda true döndür
+        for analysis in self.analysis:
+            # file_id ile kontrol
+            if file_id and analysis.get('file_id') == file_id:
+                return True
+                
+            # file_index ile kontrol (geriye dönük uyumluluk)
+            if analysis.get('file_index') == file_index:
+                return True
+                
+            # file_name ile kontrol
+            if file_name and analysis.get('file_name') == file_name:
+                return True
+        
+        return False
 
     def save(self):
         project_data = {
@@ -132,12 +173,12 @@ class Project:
         }
         
         if self._id:
-            current_app.db.projects.update_one(
+            current_app.db.projects.update_one(  # type: ignore
                 {'_id': self._id},
                 {'$set': project_data}
             )
         else:
-            result = current_app.db.projects.insert_one(project_data)
+            result = current_app.db.projects.insert_one(project_data)  # type: ignore
             self._id = result.inserted_id
         
         return self
@@ -145,7 +186,7 @@ class Project:
     @staticmethod
     def get_by_id(project_id):
         try:
-            project_data = current_app.db.projects.find_one({"_id": ObjectId(project_id)})
+            project_data = current_app.db.projects.find_one({"_id": ObjectId(project_id)})  # type: ignore
             if project_data:
                 return Project(
                     name=project_data.get('name'),
@@ -164,7 +205,7 @@ class Project:
     @staticmethod
     def get_by_created_by(user_id):
         projects = []
-        cursor = current_app.db.projects.find({"created_by": ObjectId(user_id)})
+        cursor = current_app.db.projects.find({"created_by": ObjectId(user_id)})  # type: ignore
         
         for project_data in cursor:
             projects.append(Project(
@@ -183,7 +224,7 @@ class Project:
     @staticmethod
     def get_all():
         projects = []
-        cursor = current_app.db.projects.find()
+        cursor = current_app.db.projects.find()  # type: ignore
         
         for project_data in cursor:
             projects.append(Project(
@@ -210,6 +251,6 @@ class Project:
                     pass
             
             # Veritabanından sil
-            current_app.db.projects.delete_one({'_id': self._id})
+            current_app.db.projects.delete_one({'_id': self._id})  # type: ignore
             return True
         return False 

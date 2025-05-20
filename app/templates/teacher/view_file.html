@@ -2,208 +2,413 @@
 
 {% block title %}Smart Doc Insight - Dosya: {{ file_data.filename }}{% endblock %}
 
+{% block styles %}
+<link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    /* Genel stil tanımlamaları */
+    .hero-section.compact {
+        padding: 1.5rem 0;
+        margin-bottom: 1.5rem;
+    }
+    .hero-section.compact .hero-title {
+        font-size: 1.8rem;
+        margin-bottom: 0.25rem;
+    }
+    .hero-subtitle {
+        font-size: 1rem;
+        margin-bottom: 0;
+        opacity: 0.9;
+    }
+    .compact-card {
+        padding: 1.5rem;
+    }
+    .btn-action {
+        border-radius: 4px;
+        padding: 0.375rem 0.75rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .btn-back {
+        color: #616161;
+        border-color: #e0e0e0;
+        background-color: #FAFAFA;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.375rem 0.85rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .btn-back:hover {
+        background-color: #f0f0f0;
+        transform: translateY(-1px);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .info-icon {
+        margin-right: 10px;
+        font-size: 1.2em;
+    }
+    .meta-info {
+        display: inline-flex;
+        align-items: center;
+        margin-right: 15px;
+    }
+    .status-badge {
+        padding: 0.35em 0.65em;
+        border-radius: 20px;
+        font-weight: 500;
+        letter-spacing: 0.01em;
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+    }
+    .status-badge i {
+        margin-right: 0.25rem;
+    }
+    .status-analyzed {
+        background-color: rgba(52, 168, 83, 0.15);
+        color: #34A853;
+        border: 1px solid rgba(52, 168, 83, 0.3);
+    }
+    .status-pending {
+        background-color: rgba(95, 99, 104, 0.15);
+        color: #5F6368;
+        border: 1px solid rgba(95, 99, 104, 0.3);
+    }
+    
+    /* Kapanabilir bölümler için stil */
+    .collapsible-section {
+        margin-bottom: 1.5rem;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .collapsible-header {
+        padding: 1rem 1.25rem;
+        background: linear-gradient(to right, rgba(59, 130, 246, 0.05), rgba(147, 197, 253, 0.05));
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.2s ease;
+    }
+    .collapsible-header:hover {
+        background: linear-gradient(to right, rgba(59, 130, 246, 0.1), rgba(147, 197, 253, 0.1));
+    }
+    .collapsible-header h4 {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+    }
+    .collapsible-content {
+        padding: 1.25rem;
+        background-color: white;
+        border: 1px solid rgba(0,0,0,0.05);
+        border-top: none;
+    }
+    
+    /* Modern kart tasarımı */
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
+        border: none;
+        transition: all 0.3s ease;
+    }
+    .card:hover {
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4 page-title">
-    <div>
-        <h1 class="fw-bold text-gradient">Dosya Analizi: {{ file_data.filename }}</h1>
-        <p class="text-muted"><i class="bi bi-folder2-open me-1"></i> Proje: <a href="{{ url_for('teacher.view_project', project_id=project._id) }}" class="text-decoration-none">{{ project.name }}</a></p>
-    </div>
-    <a href="{{ url_for('teacher.view_project', project_id=project._id) }}" class="btn btn-outline-secondary btn-pill">
-        <i class="bi bi-arrow-left"></i> Projeye Dön
-    </a>
-</div>
-
-<div class="card mb-4" style="animation: fadeInUp 0.5s ease 0.1s both;">
-    <div class="card-header d-flex align-items-center">
-        <i class="bi bi-file-earmark-text fs-4 text-primary me-2"></i>
-        <h5 class="mb-0">Dosya Bilgileri</h5>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="icon-box me-3 bg-light rounded-circle p-3">
-                        <i class="bi bi-file-earmark-pdf text-danger"></i>
-                    </div>
-                    <div>
-                        <label class="text-muted small">Dosya Adı</label>
-                        <p class="mb-0 fw-medium">{{ file_data.filename }}</p>
-                    </div>
+<!-- Hero Bölümü -->
+<section class="hero-section compact">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="hero-title">Dosya Analizi: {{ file_data.filename }}</h1>
+                <div class="hero-subtitle">
+                    <span class="meta-info">
+                        <i class="bi bi-folder2-open info-icon"></i> 
+                        Proje: <a href="{{ url_for('teacher.view_project', project_id=project._id) }}" class="text-decoration-none">{{ project.name }}</a>
+                    </span>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="d-flex align-items-center">
-                    <div class="icon-box me-3 bg-light rounded-circle p-3">
-                        <i class="bi bi-calendar3 text-info"></i>
+            <div>
+                <a href="{{ url_for('teacher.view_project', project_id=project._id) }}" class="btn btn-back">
+                    <i class="bi bi-arrow-left"></i> Projeye Dön
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container">
+    <!-- Dosya Bilgileri -->
+    <div class="card mb-4">
+        <div class="card-header d-flex align-items-center">
+            <i class="bi bi-file-earmark-text fs-4 text-primary me-2"></i>
+            <h5 class="mb-0">Dosya Bilgileri</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-box me-3 bg-light rounded-circle p-3">
+                            <i class="bi bi-file-earmark-pdf text-danger"></i>
+                        </div>
+                        <div>
+                            <label class="text-muted small">Dosya Adı</label>
+                            <p class="mb-0 fw-medium">{{ file_data.filename }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <label class="text-muted small">Yükleme Tarihi</label>
-                        <p class="mb-0 fw-medium">{{ file_data.upload_date.strftime('%d.%m.%Y %H:%M') }}</p>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box me-3 bg-light rounded-circle p-3">
+                            <i class="bi bi-calendar3 text-info"></i>
+                        </div>
+                        <div>
+                            <label class="text-muted small">Yükleme Tarihi</label>
+                            <p class="mb-0 fw-medium">{{ file_data.upload_date.strftime('%d.%m.%Y %H:%M') }}</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">LLM Analizi</h5>
-        {% if analysis %}
-        <div>
-            <a href="{{ url_for('teacher.download_analysis', project_id=project._id, file_index=file_index) }}" class="btn btn-sm btn-secondary me-2">
-                <i class="bi bi-download"></i> Raporu İndir
-            </a>
-            <form action="{{ url_for('teacher.analyze_file', project_id=project._id, file_index=file_index) }}" method="POST" class="d-inline">
-                <button type="submit" class="btn btn-sm btn-primary analyze-button" 
-                        onclick="return confirm('Dosyayı yeniden analiz etmek istediğinize emin misiniz? Bu işlem mevcut analizi silecektir.')">
-                    <i class="bi bi-robot"></i> Tekrar Analiz Et
+    <!-- LLM Analizi -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">LLM Analizi</h5>
+            {% if analysis %}
+            <div>
+                <a href="{{ url_for('teacher.download_analysis', project_id=project._id, file_index=file_index) }}" class="btn btn-sm btn-secondary me-2">
+                    <i class="bi bi-download"></i> Raporu İndir
+                </a>
+                <form id="reanalyzeForm" action="{{ url_for('teacher.analyze_file', project_id=project._id, file_index=file_index) }}" method="POST" class="d-inline">
+                    <button type="button" class="btn btn-sm btn-primary analyze-button" 
+                            onclick="confirmReanalyze()">
+                        <i class="bi bi-robot"></i> Tekrar Analiz Et
+                    </button>
+                </form>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#customHeadingsModal">
+                    <i class="bi bi-list-nested"></i> Özel Başlıkla Analiz Et
                 </button>
-            </form>
-            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#customHeadingsModal">
-                <i class="bi bi-list-nested"></i> Özel Başlıkla Analiz Et
-            </button>
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
-    </div>
-    <div class="card-body">
-        {% set provider = g.active_llm_provider %}
-        {% set provider_name = 'Ollama' if provider == 'ollama' else 'LM Studio' if provider == 'lmstudio' else 'OpenAI' if provider == 'openai' else 'Google Gemini' if provider == 'gemini' else 'Claude' if provider == 'claude' else 'Bilinmiyor' %}
-        
-        <div class="d-flex justify-content-end mb-3">
-            <span class="badge {% if provider == 'ollama' %}bg-primary{% elif provider == 'lmstudio' %}bg-success{% elif provider == 'openai' %}bg-success-subtle text-dark{% elif provider == 'gemini' %}bg-info{% elif provider == 'claude' %}bg-warning{% else %}bg-secondary{% endif %}">
-                <i class="bi 
-                    {% if provider == 'ollama' %}bi-robot
-                    {% elif provider == 'lmstudio' %}bi-cpu
-                    {% elif provider == 'openai' %}bi-globe
-                    {% elif provider == 'gemini' %}bi-google
-                    {% elif provider == 'claude' %}bi-stars
-                    {% else %}bi-question-circle
-                    {% endif %}"></i>
-                Aktif LLM Sağlayıcı: {{ provider_name }}
-            </span>
-        </div>
-        
-        {% if provider == 'ollama' and not g.ollama_available %}
-            <div class="alert alert-warning mb-4" role="alert">
-                <i class="bi bi-exclamation-triangle"></i> Ollama LLM servisi şu anda çalışmıyor. 
-                Lütfen <a href="{{ url_for('main.system_status') }}" class="alert-link">sistem durumu</a> sayfasını kontrol edin
-                veya <a href="{{ url_for('teacher.select_llm_provider') }}" class="alert-link">LLM Sağlayıcı Seçimi</a> sayfasından başka bir sağlayıcıya geçiş yapın.
-            </div>
-        {% elif provider == 'lmstudio' and not g.lmstudio_available %}
-            <div class="alert alert-warning mb-4" role="alert">
-                <i class="bi bi-exclamation-triangle"></i> LM Studio servisi şu anda çalışmıyor. 
-                Lütfen <a href="{{ url_for('main.system_status') }}" class="alert-link">sistem durumu</a> sayfasını kontrol edin.
-                LM Studio uygulamasının açık ve API'nin etkin olduğundan emin olun.
-            </div>
-        {% elif provider in ['openai', 'gemini', 'claude'] and not g.active_llm_available %}
-            <div class="alert alert-warning mb-4" role="alert">
-                <i class="bi bi-exclamation-triangle"></i> {{ provider_name }} API servisi şu anda kullanılamıyor. 
-                <a href="{{ url_for('teacher.select_llm_provider') }}" class="alert-link">LLM Sağlayıcı Seçimi</a> sayfasından API anahtarınızı doğru girdiğinizden emin olun.
-            </div>
-        {% endif %}
-        
-        {% if analysis %}
-            {% set llm_info = analysis.get('content', {}).get('llm_info', {}) %}
-            {% set provider_name = llm_info.get('provider_name', 'Bilinmiyor') %}
-            {% set model_name = llm_info.get('model', 'Bilinmiyor') %}
-            {% set analysis_time = analysis.get('analyzed_at', '') %}
-            {% set custom_headings = analysis.get('content', {}).get('custom_headings', []) %}
-            {% set is_custom_analysis = custom_headings|length > 0 %}
+        <div class="card-body">
+            {% set provider = g.active_llm_provider %}
+            {% set provider_name = 'Ollama' if provider == 'ollama' else 'LM Studio' if provider == 'lmstudio' else 'OpenAI' if provider == 'openai' else 'Google Gemini' if provider == 'gemini' else 'Claude' if provider == 'claude' else 'Bilinmiyor' %}
             
-            <div class="mb-4">
-                <div class="d-flex align-items-center flex-wrap">
-                    <span class="badge bg-primary rounded-pill me-2 mb-1">
-                        <i class="bi bi-info-circle"></i> LLM Sağlayıcı: {{ provider_name }}
-                    </span>
-                    {% if model_name != 'Bilinmiyor' %}
-                    <span class="badge bg-secondary rounded-pill me-2 mb-1">
-                        <i class="bi bi-cpu"></i> Model: {{ model_name }}
-                    </span>
-                    {% endif %}
-                    {% if is_custom_analysis %}
-                    <span class="badge bg-success rounded-pill me-2 mb-1">
-                        <i class="bi bi-list-nested"></i> Özel Başlıklarla Analiz
-                    </span>
-                    {% endif %}
-                </div>
-                <div class="mt-2 small text-muted">
-                    <i class="bi bi-calendar3"></i> Analiz Tarihi: {{ analysis_time }}
-                </div>
+            <div class="d-flex justify-content-end mb-3">
+                <span class="status-badge {% if provider == 'ollama' %}status-analyzed{% elif provider == 'lmstudio' %}status-analyzed{% elif provider == 'openai' %}status-analyzed{% elif provider == 'gemini' %}status-analyzed{% elif provider == 'claude' %}status-analyzed{% else %}status-pending{% endif %}">
+                    <i class="bi 
+                        {% if provider == 'ollama' %}bi-robot
+                        {% elif provider == 'lmstudio' %}bi-cpu
+                        {% elif provider == 'openai' %}bi-globe
+                        {% elif provider == 'gemini' %}bi-google
+                        {% elif provider == 'claude' %}bi-stars
+                        {% else %}bi-question-circle
+                        {% endif %}"></i>
+                    Aktif LLM Sağlayıcı: {{ provider_name }}
+                </span>
             </div>
+            
+            {% if provider == 'ollama' and not g.ollama_available %}
+                <div class="alert alert-warning mb-4" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i> Ollama LLM servisi şu anda çalışmıyor. 
+                    Lütfen <a href="{{ url_for('main.system_status') }}" class="alert-link">sistem durumu</a> sayfasını kontrol edin
+                    veya <a href="{{ url_for('teacher.select_llm_provider') }}" class="alert-link">LLM Sağlayıcı Seçimi</a> sayfasından başka bir sağlayıcıya geçiş yapın.
+                </div>
+            {% elif provider == 'lmstudio' and not g.lmstudio_available %}
+                <div class="alert alert-warning mb-4" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i> LM Studio servisi şu anda çalışmıyor. 
+                    Lütfen <a href="{{ url_for('main.system_status') }}" class="alert-link">sistem durumu</a> sayfasını kontrol edin.
+                    LM Studio uygulamasının açık ve API'nin etkin olduğundan emin olun.
+                </div>
+            {% elif provider in ['openai', 'gemini', 'claude'] and not g.active_llm_available %}
+                <div class="alert alert-warning mb-4" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i> {{ provider_name }} API servisi şu anda kullanılamıyor. 
+                    <a href="{{ url_for('teacher.select_llm_provider') }}" class="alert-link">LLM Sağlayıcı Seçimi</a> sayfasından API anahtarınızı doğru girdiğinizden emin olun.
+                </div>
+            {% endif %}
+            
+            {% if analysis %}
+                {% set llm_info = analysis.get('content', {}).get('llm_info', {}) %}
+                {% set provider_name = llm_info.get('provider_name', 'Bilinmiyor') %}
+                {% set model_name = llm_info.get('model', 'Bilinmiyor') %}
+                {% set analysis_time = analysis.get('analyzed_at', '') %}
+                {% set custom_headings = analysis.get('content', {}).get('custom_headings', []) %}
+                {% set is_custom_analysis = custom_headings|length > 0 %}
+                
+                <div class="mb-4">
+                    <div class="d-flex align-items-center flex-wrap">
+                        <span class="status-badge status-analyzed me-2 mb-1">
+                            <i class="bi bi-info-circle"></i> LLM Sağlayıcı: {{ provider_name }}
+                        </span>
+                        {% if model_name != 'Bilinmiyor' %}
+                        <span class="status-badge status-pending me-2 mb-1">
+                            <i class="bi bi-cpu"></i> Model: {{ model_name }}
+                        </span>
+                        {% endif %}
+                        {% if is_custom_analysis %}
+                        <span class="status-badge status-analyzed me-2 mb-1">
+                            <i class="bi bi-list-nested"></i> Özel Başlıklarla Analiz
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="mt-2 small text-muted">
+                        <i class="bi bi-calendar3"></i> Analiz Tarihi: {{ analysis_time }}
+                    </div>
+                </div>
 
-            {# Eğer özel başlıklarla analiz yapılmışsa, analiz sonuçlarını özel başlıklara göre göster #}
-            {% if is_custom_analysis %}
-                <div class="row">
-                    {% set used_keys = [] %}
-                    {% for heading in custom_headings %}
-                    {% set category_key = 'custom_' + loop.index|string %}
-                    {% set items = analysis.get('content', {}).get(category_key, []) %}
-                    
-                    {% if category_key not in used_keys and heading.title|trim %}
-                    {% set used_keys = used_keys + [category_key] %}
-                    <div class="col-lg-6 mb-4">
-                        <div class="card h-100 border-light shadow-sm">
-                            <div class="card-header bg-light">
-                                <h5 class="mb-0">
-                                    <i class="bi bi-lightbulb text-warning me-2"></i>{{ heading.title }}
-                                </h5>
-                                {% if heading.description %}
-                                <small class="text-muted d-block mt-1">{{ heading.description }}</small>
-                                {% endif %}
+                <!-- 1. KISIM: KATEGORİ BAZLI ANALİZ SONUÇLARI -->
+                {% if is_custom_analysis %}
+                    <div class="row">
+                        {% set used_keys = [] %}
+                        {% for heading in custom_headings %}
+                        {% set category_key = 'custom_' + loop.index|string %}
+                        {% set items = analysis.get('content', {}).get(category_key, []) %}
+                        
+                        {% if category_key not in used_keys and heading.title|trim %}
+                        {% set used_keys = used_keys + [category_key] %}
+                        <div class="col-lg-6 mb-4">
+                            <div class="card h-100 border-light shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-lightbulb text-warning me-2"></i>{{ heading.title }}
+                                    </h5>
+                                    {% if heading.description %}
+                                    <small class="text-muted d-block mt-1">{{ heading.description }}</small>
+                                    {% endif %}
+                                </div>
+                                <div class="card-body">
+                                    {% if items and items|length > 0 %}
+                                        <ul class="list-group list-group-flush">
+                                            {% set displayed_items = [] %}
+                                            {% for item in items %}
+                                                {% if item|trim and item not in displayed_items %}
+                                                {% set displayed_items = displayed_items + [item] %}
+                                                <li class="list-group-item bg-transparent">
+                                                    <i class="bi bi-check-circle-fill text-success me-2"></i>{{ item }}
+                                                </li>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </ul>
+                                        
+                                        {% if displayed_items|length == 0 %}
+                                        <div class="text-center text-muted py-3">
+                                            <i class="bi bi-info-circle display-4"></i>
+                                            <p class="mt-2">Bu başlıkla ilgili veri bulunamadı</p>
+                                        </div>
+                                        {% endif %}
+                                    {% else %}
+                                        <div class="text-center text-muted py-3">
+                                            <i class="bi bi-info-circle display-4"></i>
+                                            <p class="mt-2">Bu başlıkla ilgili veri bulunamadı</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
                             </div>
-                            <div class="card-body">
-                                {% if items and items|length > 0 %}
-                                    <ul class="list-group list-group-flush">
-                                        {% set displayed_items = [] %}
-                                        {% for item in items %}
-                                            {% if item|trim and item not in displayed_items %}
-                                            {% set displayed_items = displayed_items + [item] %}
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="row">
+                        {% set analysis_sections = [
+                            {
+                                'key': 'grup_uyeleri',
+                                'title': 'Grup Üyeleri',
+                                'icon': 'bi-people-fill text-primary'
+                            },
+                            {
+                                'key': 'sorumluluklar',
+                                'title': 'Sorumluluklar',
+                                'icon': 'bi-check2-square text-success'
+                            },
+                            {
+                                'key': 'diyagramlar',
+                                'title': 'Diyagramlar',
+                                'icon': 'bi-bar-chart-line text-info'
+                            },
+                            {
+                                'key': 'basliklar',
+                                'title': 'Başlıklar',
+                                'icon': 'bi-bookmark-star text-warning'
+                            },
+                            {
+                                'key': 'eksikler',
+                                'title': 'Eksikler',
+                                'icon': 'bi-exclamation-triangle text-danger'
+                            }
+                        ] %}
+                        
+                        {% for section in analysis_sections %}
+                            {% set items = analysis.get('content', {}).get(section.key, []) %}
+                            {% if items %}
+                            <div class="col-lg-6 mb-4">
+                                <div class="card h-100 border-light shadow-sm">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">
+                                            <i class="bi {{ section.icon }} me-2"></i>{{ section.title }}
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-group list-group-flush">
+                                            {% for item in items %}
                                             <li class="list-group-item bg-transparent">
                                                 <i class="bi bi-check-circle-fill text-success me-2"></i>{{ item }}
                                             </li>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </ul>
-                                    
-                                    {% if displayed_items|length == 0 %}
-                                    <div class="text-center text-muted py-3">
-                                        <i class="bi bi-info-circle display-4"></i>
-                                        <p class="mt-2">Bu başlıkla ilgili veri bulunamadı</p>
+                                            {% endfor %}
+                                        </ul>
                                     </div>
-                                    {% endif %}
-                                {% else %}
-                                    <div class="text-center text-muted py-3">
-                                        <i class="bi bi-info-circle display-4"></i>
-                                        <p class="mt-2">Bu başlıkla ilgili veri bulunamadı</p>
-                                    </div>
-                                {% endif %}
+                                </div>
                             </div>
-                        </div>
+                            {% endif %}
+                        {% endfor %}
                     </div>
-                    {% endif %}
-                    {% endfor %}
+                {% endif %}
+
+                <!-- 2. KISIM: ANALİZ ÖZET BÖLÜMÜ (KAPANABİLİR) -->
+                <div class="collapsible-section mb-4 mt-4">
+                    <div class="collapsible-header" data-bs-toggle="collapse" data-bs-target="#analysisSummaryContent" aria-expanded="true">
+                        <h4><i class="bi bi-file-earmark-text text-info me-2"></i> Analiz Özeti</h4>
+                        <i class="bi bi-chevron-down"></i>
+                    </div>
+                    <div class="collapsible-content collapse show" id="analysisSummaryContent">
+                        {% if is_custom_analysis %}
+                            <p class="text-muted mb-3"><i class="bi bi-info-circle"></i> Bu analiz özel başlıklarla yapıldığından, sonuçlar aşağıda başlık bazlı olarak gösterilmektedir.</p>
+                        {% endif %}
+                        
+                        {# Ham sonucu paragraflar halinde göster #}
+                        {% set raw_results = analysis.get('content', {}).get('ham_sonuc', 'Özet bilgi bulunamadı.').split('\n') %}
+                        {% for paragraph in raw_results %}
+                            {% if paragraph.strip() %}
+                                <p class="mb-2">{{ paragraph }}</p>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
                 </div>
                 
-                <!-- Hata ayıklama -->
+                <!-- 3. KISIM: HATA AYIKLAMA BİLGİLERİ -->
                 {% if g.debug_mode %}
-                <div class="mt-4 mb-4">
-                    <div class="card">
-                        <div class="card-header bg-light">
-                            <h5 class="mb-0"><i class="bi bi-bug-fill text-danger me-2"></i>Hata Ayıklama Bilgileri</h5>
-                            <small class="text-muted">Bu bölüm sadece hata ayıklama modunda görünür</small>
-                        </div>
-                        <div class="card-body">
-                            <h6>Başlık Kategorileri:</h6>
-                            <ul>
-                                {% for heading in custom_headings %}
-                                <li>
-                                    <strong>{{ heading.title }}</strong> ({{ 'custom_' + loop.index|string }})
-                                    {% if heading.description %}<br><small class="text-muted">{{ heading.description }}</small>{% endif %}
-                                </li>
-                                {% endfor %}
-                            </ul>
-                            
+                <div class="collapsible-section mb-4">
+                    <div class="collapsible-header" data-bs-toggle="collapse" data-bs-target="#debugInfoContent" aria-expanded="false">
+                        <h4><i class="bi bi-bug-fill text-danger me-2"></i> Hata Ayıklama Bilgileri</h4>
+                        <i class="bi bi-chevron-down"></i>
+                    </div>
+                    <div class="collapsible-content collapse" id="debugInfoContent">
+                        <div class="mb-3">
                             <h6>Content Anahtarları:</h6>
                             <ul>
                                 {% for key, value in analysis.get('content', {}).items() %}
@@ -220,156 +425,53 @@
                                 {% endfor %}
                             </ul>
                         </div>
-                    </div>
-                </div>
-                {% endif %}
-            {% else %}
-                <div class="row">
-                    {% set analysis_sections = [
-                        {
-                            'key': 'grup_uyeleri',
-                            'title': 'Grup Üyeleri',
-                            'icon': 'bi-people-fill text-primary'
-                        },
-                        {
-                            'key': 'sorumluluklar',
-                            'title': 'Sorumluluklar',
-                            'icon': 'bi-check2-square text-success'
-                        },
-                        {
-                            'key': 'diyagramlar',
-                            'title': 'Diyagramlar',
-                            'icon': 'bi-bar-chart-line text-info'
-                        },
-                        {
-                            'key': 'basliklar',
-                            'title': 'Başlıklar',
-                            'icon': 'bi-bookmark-star text-warning'
-                        },
-                        {
-                            'key': 'eksikler',
-                            'title': 'Eksikler',
-                            'icon': 'bi-exclamation-triangle text-danger'
-                        }
-                    ] %}
-                    
-                    {% for section in analysis_sections %}
-                        {% set items = analysis.get('content', {}).get(section.key, []) %}
-                        {% if items %}
-                        <div class="col-lg-6 mb-4">
-                            <div class="card h-100 border-light shadow-sm">
-                                <div class="card-header bg-light">
-                                    <h5 class="mb-0">
-                                        <i class="bi {{ section.icon }} me-2"></i>{{ section.title }}
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <ul class="list-group list-group-flush">
-                                        {% for item in items %}
-                                        <li class="list-group-item bg-transparent">
-                                            <i class="bi bi-check-circle-fill text-success me-2"></i>{{ item }}
-                                        </li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
-                    {% endfor %}
-                </div>
-                
-                {% if g.debug_mode %}
-                <div class="mt-4 mb-4">
-                    <div class="card">
-                        <div class="card-header bg-light">
-                            <h5 class="mb-0"><i class="bi bi-bug-fill text-danger me-2"></i>Hata Ayıklama Bilgileri (Standart Analiz)</h5>
-                        </div>
-                        <div class="card-body">
-                            <h6>Content Anahtarları:</h6>
+                        
+                        {% if is_custom_analysis %}
+                        <div class="mt-3">
+                            <h6>Başlık Kategorileri:</h6>
                             <ul>
-                                {% for key, value in analysis.get('content', {}).items() %}
+                                {% for heading in custom_headings %}
                                 <li>
-                                    <strong>{{ key }}</strong>: 
-                                    {% if key == 'ham_sonuc' %}
-                                    <span class="text-muted">[Ham sonuç, uzun metin]</span>
-                                    {% elif key == 'llm_info' %}
-                                    <span class="text-muted">[Meta veri]</span>
-                                    {% else %}
-                                    {{ value|length }} madde
-                                    {% endif %}
+                                    <strong>{{ heading.title }}</strong> ({{ 'custom_' + loop.index|string }})
+                                    {% if heading.description %}<br><small class="text-muted">{{ heading.description }}</small>{% endif %}
                                 </li>
                                 {% endfor %}
                             </ul>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
                 {% endif %}
-            {% endif %}
-
-            {# Analiz Özeti - Her analiz için göster #}
-            <div class="card mt-5 border-info shadow">
-                <div class="card-header bg-info bg-opacity-10 d-flex align-items-center">
-                    <i class="bi bi-file-earmark-text fs-4 text-info me-2"></i>
-                    <h4 class="mb-0">Analiz Özeti</h4>
-                </div>
-                <div class="card-body">
-                    {% if is_custom_analysis %}
-                        <p class="text-muted mb-3"><i class="bi bi-info-circle"></i> Bu analiz özel başlıklarla yapıldığından, sonuçlar yukarıda başlık bazlı olarak gösterilmektedir. Aşağıda ham LLM çıktısını görebilirsiniz.</p>
-                        
-                        <details>
-                            <summary class="text-primary mb-2 cursor-pointer">Ham LLM Çıktısını Göster/Gizle</summary>
-                            <div class="bg-light p-3 rounded">
-                                {% set raw_results = analysis.get('content', {}).get('ham_sonuc', 'Özet bilgi bulunamadı.').split('\n') %}
-                                {% for paragraph in raw_results %}
-                                    {% if paragraph.strip() %}
-                                        <p class="mb-2">{{ paragraph }}</p>
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-                        </details>
-                    {% else %}
-                        {# Ham sonucu paragraflar halinde göster #}
-                        {% set raw_results = analysis.get('content', {}).get('ham_sonuc', 'Özet bilgi bulunamadı.').split('\n') %}
-                        {% for paragraph in raw_results %}
-                            {% if paragraph.strip() %}
-                                <p class="mb-2">{{ paragraph }}</p>
-                            {% endif %}
-                        {% endfor %}
-                    {% endif %}
-                </div>
-            </div>
-
-            {# Özel başlık analizi yapılmadıysa kalsın, yapıldıysa göstermeye gerek yok #}
-            {% if not is_custom_analysis %}
-            {# Ham Sonuç - Sadece teknik detayları görmek isteyenler için #}
-            <div class="mt-4 text-end">
-                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#rawResult" aria-expanded="false" aria-controls="rawResult">
-                    <i class="bi bi-code"></i> Ham LLM Çıktısı
-                </button>
-                <div class="collapse mt-2" id="rawResult">
-                    <div class="card card-body bg-light">
+                
+                <!-- 4. KISIM: HAM LLM ÇIKTISI (KAPANABİLİR) -->
+                <div class="collapsible-section mb-4">
+                    <div class="collapsible-header" data-bs-toggle="collapse" data-bs-target="#rawOutputContent" aria-expanded="false">
+                        <h4><i class="bi bi-code text-secondary me-2"></i> Ham LLM Çıktısı</h4>
+                        <i class="bi bi-chevron-down"></i>
+                    </div>
+                    <div class="collapsible-content collapse" id="rawOutputContent">
                         <pre class="mb-0 text-secondary">{{ analysis.get('content', {}).get('ham_sonuc', '') }}</pre>
                     </div>
                 </div>
-            </div>
-            {% endif %}
-        {% else %}
-            <div class="text-center py-5">
-                <i class="bi bi-hourglass-split" style="font-size: 4rem; color: #ddd;"></i>
-                <h4 class="mt-3">Henüz analiz yapılmadı</h4>
-                <p class="text-muted">Bu PDF dosyasını LLM ile analiz etmek için "Analiz Et" butonuna tıklayın.</p>
-                <div class="mt-3">
-                    <form action="{{ url_for('teacher.analyze_file', project_id=project._id, file_index=file_index) }}" method="POST" class="d-inline-block">
-                        <button type="submit" class="btn btn-primary analyze-button me-2">
-                            <i class="bi bi-robot"></i> Analiz Et
+                
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-hourglass-split" style="font-size: 4rem; color: #ddd;"></i>
+                    <h4 class="mt-3">Henüz analiz yapılmadı</h4>
+                    <p class="text-muted">Bu PDF dosyasını LLM ile analiz etmek için "Analiz Et" butonuna tıklayın.</p>
+                    <div class="mt-3">
+                        <form action="{{ url_for('teacher.analyze_file', project_id=project._id, file_index=file_index) }}" method="POST" class="d-inline-block">
+                            <button type="submit" class="btn btn-primary analyze-button me-2">
+                                <i class="bi bi-robot"></i> Analiz Et
+                            </button>
+                        </form>
+                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#customHeadingsModal">
+                            <i class="bi bi-list-nested"></i> Özel Başlıkla Analiz Et
                         </button>
-                    </form>
-                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#customHeadingsModal">
-                        <i class="bi bi-list-nested"></i> Özel Başlıkla Analiz Et
-                    </button>
+                    </div>
                 </div>
-            </div>
-        {% endif %}
+            {% endif %}
+        </div>
     </div>
 </div>
 
@@ -441,506 +543,121 @@
     </div>
 </div>
 
-<style>
-/* Modern kart tasarımı ve animasyonlar */
-.custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 8px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 8px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
-}
-
-/* Cursor pointer for interactive elements */
-.cursor-pointer {
-    cursor: pointer;
-}
-
-/* Kart Animasyonları ve Tasarım İyileştirmeleri */
-.card {
-    transition: all 0.3s ease;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
-    border: none;
-}
-
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.12);
-}
-
-.card-header {
-    border-bottom: none;
-    background: linear-gradient(to right, rgba(var(--bs-primary-rgb), 0.05), rgba(var(--bs-info-rgb), 0.05));
-    padding: 1rem 1.25rem;
-}
-
-.card-header h5 {
-    font-weight: 600;
-}
-
-.analysis-card {
-    animation: fadeInUp 0.5s ease forwards;
-    opacity: 0;
-}
-
-.list-group-item {
-    border: none;
-    border-radius: 6px;
-    margin-bottom: 5px;
-    transition: all 0.2s;
-    padding: 12px 15px;
-}
-
-.list-group-item:hover {
-    background-color: rgba(var(--bs-primary-rgb), 0.05);
-    transform: translateX(5px);
-}
-
-/* Modern Butonlar */
-.btn {
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    font-weight: 500;
-    padding: 0.5rem 1rem;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
-}
-
-.btn-primary {
-    background: linear-gradient(45deg, #4a6cf7, #657be5);
-    border: none;
-}
-
-.btn-primary:hover {
-    background: linear-gradient(45deg, #3959e3, #5069d4);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 10px rgba(74, 108, 247, 0.3);
-}
-
-.btn-outline-primary {
-    border-color: #4a6cf7;
-    color: #4a6cf7;
-}
-
-.btn-outline-primary:hover {
-    background-color: #4a6cf7;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 10px rgba(74, 108, 247, 0.2);
-}
-
-.btn-success {
-    background: linear-gradient(45deg, #28a745, #20c997);
-    border: none;
-}
-
-.btn-success:hover {
-    background: linear-gradient(45deg, #218838, #1ba87e);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 10px rgba(40, 167, 69, 0.3);
-}
-
-/* Badge Tasarımı */
-.badge {
-    font-weight: 500;
-    padding: 0.5em 0.8em;
-    border-radius: 6px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-}
-
-/* Animasyonlar */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes fadeInUp {
-    from { 
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to { 
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes slideInRight {
-    from {
-        opacity: 0;
-        transform: translateX(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-/* Sayfa başlığı animasyonu */
-.page-title {
-    animation: fadeInUp 0.5s ease forwards;
-}
-
-/* Loader Animasyonu */
-.loading-spinner {
-    width: 40px;
-    height: 40px;
-    margin: 20px auto;
-    border: 4px solid rgba(0, 0, 0, 0.1);
-    border-left-color: #4a6cf7;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-/* Toast Bildirimleri */
-.toast-notification {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 1050;
-    min-width: 250px;
-    background: white;
-    border-radius: 10px;
-    padding: 15px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    transform: translateY(100px);
-    opacity: 0;
-    animation: slideUp 0.3s forwards;
-}
-
-@keyframes slideUp {
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-</style>
 {% endblock %}
 
 {% block scripts %}
+{{ super() }}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Analiz butonuna tıklandığında yükleniyor göstergesi
+    // Collapsible bölümler için chevron ikonlarının yönetimi
+    const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+    
+    collapsibleHeaders.forEach(header => {
+        const targetId = header.getAttribute('data-bs-target');
+        const target = document.querySelector(targetId);
+        const icon = header.querySelector('.bi-chevron-down');
+        
+        // Başlangıçta açık/kapalı durumuna göre ikonu ayarla
+        if (target.classList.contains('show')) {
+            icon.classList.remove('bi-chevron-down');
+            icon.classList.add('bi-chevron-up');
+        }
+        
+        // Tıklama olayı için Bootstrap collapse olayını dinle
+        target.addEventListener('shown.bs.collapse', function() {
+            icon.classList.remove('bi-chevron-down');
+            icon.classList.add('bi-chevron-up');
+        });
+        
+        target.addEventListener('hidden.bs.collapse', function() {
+            icon.classList.remove('bi-chevron-up');
+            icon.classList.add('bi-chevron-down');
+        });
+    });
+    
+    // Mevcut analiz butonları için kodlar
     const analyzeButtons = document.querySelectorAll('.analyze-button');
     
     analyzeButtons.forEach(function(button) {
         button.addEventListener('click', function() {
             // Eğer onay kutusu onaylandıysa
             if (!this.hasAttribute('onclick') || confirm('Dosyayı yeniden analiz etmek istediğinize emin misiniz? Bu işlem mevcut analizi silecektir.')) {
+                // LLM sağlayıcı bilgilerini al
+                const provider = "{{ g.active_llm_provider }}";
+                let providerName = "";
+                let modelName = "";
+                
+                // Sağlayıcı adını belirle
+                switch(provider) {
+                    case 'ollama': 
+                        providerName = "Ollama"; 
+                        modelName = "{{ models.ollama_model }}";
+                        break;
+                    case 'lmstudio': 
+                        providerName = "LM Studio"; 
+                        modelName = "{{ models.lmstudio_model }}";
+                        break;
+                    case 'openai': 
+                        providerName = "OpenAI GPT"; 
+                        modelName = "{{ models.openai_model }}";
+                        break;
+                    case 'gemini': 
+                        providerName = "Google Gemini"; 
+                        modelName = "{{ models.gemini_model }}";
+                        break;
+                    case 'claude': 
+                        providerName = "Anthropic Claude"; 
+                        modelName = "{{ models.claude_model }}";
+                        break;
+                    default: 
+                        providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
+                        modelName = "belirlenmemiş model";
+                }
+                
+                // Analiz işlemi başladı bildirimi oluştur
+                const analyzeMessage = `<div>
+                    <h6 class="mb-1 fw-bold">${providerName} sistemi ile analiz başlatıldı</h6>
+                    <p class="mb-0 small">'${modelName}' modeli kullanılarak analiz yapılıyor...</p>
+                </div>`;
+                
+                // Global bildirim sistemini kullan
+                if (typeof showNotification === 'function') {
+                    showNotification(analyzeMessage, 'info', 'Analiz Başlatıldı');
+                } else {
+                    // Yedek olarak eski bildirim sistemini kullan
+                    const notification = document.createElement('div');
+                    notification.className = 'analysis-progress-notification';
+                    notification.id = 'analysisProgressNotification';
+                    notification.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border spinner-border-sm text-primary me-3" role="status"></div>
+                            <div>
+                                <h6 class="mb-1 fw-bold">${providerName} sistemi ile analiz başlatıldı</h6>
+                                <p class="mb-0 small">'${modelName}' modeli kullanılarak analiz yapılıyor...</p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Bildirimi sayfaya ekle
+                    document.body.appendChild(notification);
+                }
+                
                 // Buton metnini değiştir ve devre dışı bırak
                 this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Analiz Ediliyor...';
                 this.disabled = true;
+                
                 // Formu gönder
                 this.closest('form').submit();
             }
         });
     });
     
-    // DOM Elemanları
-    const customHeadingsModal = document.getElementById('customHeadingsModal');
-    const headingsContainer = document.getElementById('headingsContainer');
-    const addHeadingBtn = document.getElementById('addHeadingBtn');
-    const resetFormBtn = document.getElementById('resetFormBtn');
-    const useDefaultHeadingsBtn = document.getElementById('useDefaultHeadingsBtn');
-    const analyzeWithHeadingsBtn = document.getElementById('analyzeWithHeadingsBtn');
-    const saveHeadingsBtn = document.getElementById('saveHeadingsBtn');
-    const customHeadingsForm = document.getElementById('customHeadingsForm');
-
-    // localStorage anahtarı
-    const STORAGE_KEY = 'smartDocInsight_customHeadings';
-    
-    // Bootstrap validation için
-    function enableValidation() {
-        // Bootstrap validation
-        customHeadingsForm.addEventListener('submit', function(event) {
-            if (!customHeadingsForm.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            customHeadingsForm.classList.add('was-validated');
-        }, false);
-        
-        // Başlık alanlarına anlık doğrulama ekle
-        document.querySelectorAll('.heading-title').forEach(input => {
-            input.addEventListener('input', validateHeadingInput);
-        });
-    }
-    
-    // Başlık alanı doğrulama
-    function validateHeadingInput(event) {
-        const input = event.target;
-        if (input.value.trim() === '') {
-            input.setCustomValidity('Başlık boş olamaz');
-            input.classList.add('is-invalid');
-        } else {
-            input.setCustomValidity('');
-            input.classList.remove('is-invalid');
+    // "Tekrar analiz et" butonu için onay dialogu
+    window.confirmReanalyze = function() {
+        if (confirm('Dosyayı yeniden analiz etmek istediğinize emin misiniz? Bu işlem mevcut analizi silecektir.')) {
+            document.getElementById('reanalyzeForm').submit();
         }
-    }
-
-    // Modal kapanırken form temizleme
-    customHeadingsModal.addEventListener('hidden.bs.modal', function() {
-        customHeadingsForm.classList.remove('was-validated');
-    });
-
-    // Yeni başlık ekle
-    addHeadingBtn.addEventListener('click', function() {
-        const headingItems = document.querySelectorAll('.heading-item');
-        
-        // Yeni başlık alanı oluştur
-        const newHeadingItem = headingItems[0].cloneNode(true);
-        
-        // İçeriği temizle
-        newHeadingItem.querySelector('.heading-title').value = '';
-        newHeadingItem.querySelector('.heading-description').value = '';
-        
-        // Silme butonunu göster
-        newHeadingItem.querySelector('.remove-heading-btn').style.display = 'inline-block';
-        
-        // Validation sınıflarını temizle
-        newHeadingItem.querySelector('.heading-title').classList.remove('is-invalid', 'is-valid');
-        
-        // Container'a ekle
-        headingsContainer.appendChild(newHeadingItem);
-        
-        // Silme butonu için event listener
-        newHeadingItem.querySelector('.remove-heading-btn').addEventListener('click', function() {
-            newHeadingItem.remove();
-            updateRemoveButtons();
-        });
-        
-        // Input için validation
-        newHeadingItem.querySelector('.heading-title').addEventListener('input', validateHeadingInput);
-        
-        // Scroll to bottom
-        headingsContainer.scrollTop = headingsContainer.scrollHeight;
-        
-        // Silme butonlarını güncelle
-        updateRemoveButtons();
-    });
-
-    // Silme butonlarını güncelle - en az bir başlık kalmalı
-    function updateRemoveButtons() {
-        const headingItems = document.querySelectorAll('.heading-item');
-        if (headingItems.length <= 1) {
-            headingItems[0].querySelector('.remove-heading-btn').style.display = 'none';
-        } else {
-            headingItems.forEach(item => {
-                item.querySelector('.remove-heading-btn').style.display = 'inline-block';
-            });
-        }
-    }
-    
-    // Silme butonlarına event listener ekle
-    function setupRemoveButtons() {
-        document.querySelectorAll('.remove-heading-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                this.closest('.heading-item').remove();
-                updateRemoveButtons();
-            });
-        });
-        updateRemoveButtons();
-    }
-
-    // Formu temizle
-    resetFormBtn.addEventListener('click', function() {
-        // İlk öğe hariç tüm başlıkları temizle
-        const headingItems = document.querySelectorAll('.heading-item');
-        for (let i = 1; i < headingItems.length; i++) {
-            headingItems[i].remove();
-        }
-        
-        // İlk öğeyi temizle
-        headingItems[0].querySelector('.heading-title').value = '';
-        headingItems[0].querySelector('.heading-description').value = '';
-        
-        // Silme butonunu gizle ve validation sınıflarını temizle
-        headingItems[0].querySelector('.remove-heading-btn').style.display = 'none';
-        headingItems[0].querySelector('.heading-title').classList.remove('is-invalid', 'is-valid');
-        customHeadingsForm.classList.remove('was-validated');
-        
-        // localStorage'dan kayıtlı başlıkları sil
-        localStorage.removeItem(STORAGE_KEY);
-    });
-
-    // Varsayılan başlıkları kullan
-    useDefaultHeadingsBtn.addEventListener('click', function() {
-        const defaultHeadings = [
-            {title: "İçerik Özeti", description: "Belgenin ana içeriğinin kısa bir özeti"},
-            {title: "Anahtar Kavramlar", description: "Belgede geçen önemli kavramlar ve tanımlar"},
-            {title: "Bilimsel Değer", description: "Belgenin bilimsel önemi ve katkısı"},
-            {title: "Dil ve İfade", description: "Belgenin dil kullanımı ve anlatım özellikleri"},
-            {title: "Öğretimsel Değer", description: "Belgenin eğitim amaçlı kullanılabilirliği"}
-        ];
-        
-        // Mevcut tüm başlıkları temizle
-        const existingHeadings = document.querySelectorAll('.heading-item');
-        existingHeadings.forEach(item => item.remove());
-        
-        // Varsayılan başlıkları ekle
-        defaultHeadings.forEach((heading, index) => {
-            const headingTemplate = document.querySelector('.heading-item');
-            let headingItem;
-            
-            if (index === 0 && headingTemplate) {
-                headingItem = headingTemplate;
-            } else {
-                const template = document.querySelector('.heading-item');
-                headingItem = template.cloneNode(true);
-                headingsContainer.appendChild(headingItem);
-            }
-            
-            headingItem.querySelector('.heading-title').value = heading.title;
-            headingItem.querySelector('.heading-description').value = heading.description;
-            
-            // Silme butonunu ayarla
-            const removeBtn = headingItem.querySelector('.remove-heading-btn');
-            removeBtn.addEventListener('click', function() {
-                headingItem.remove();
-                updateRemoveButtons();
-            });
-        });
-        
-        updateRemoveButtons();
-    });
-
-    // Analiz yapma
-    analyzeWithHeadingsBtn.addEventListener('click', function() {
-        if (!validateForm()) return;
-        
-        // Debug için konsola bilgi yazdır
-        console.log('Özel başlıklarla analiz başlatılıyor...');
-        const headings = [];
-        document.querySelectorAll('.heading-item').forEach(item => {
-            headings.push({
-                title: item.querySelector('.heading-title').value,
-                description: item.querySelector('.heading-description').value
-            });
-        });
-        console.log('Gönderilecek başlıklar:', headings);
-        
-        // Formu gönder
-        customHeadingsForm.submit();
-    });
-    
-    // Form doğrulama
-    function validateForm() {
-        const titleInputs = document.querySelectorAll('.heading-title');
-        let isValid = true;
-        
-        titleInputs.forEach(input => {
-            if (input.value.trim() === '') {
-                input.classList.add('is-invalid');
-                isValid = false;
-            } else {
-                input.classList.remove('is-invalid');
-            }
-        });
-        
-        if (!isValid) {
-            customHeadingsForm.classList.add('was-validated');
-            alert('Lütfen tüm başlık alanlarını doldurun.');
-        }
-        
-        return isValid;
-    }
-    
-    // localStorage'a kaydet
-    saveHeadingsBtn.addEventListener('click', function() {
-        if (!validateForm()) return;
-        
-        const headings = [];
-        const headingItems = document.querySelectorAll('.heading-item');
-        
-        headingItems.forEach(item => {
-            headings.push({
-                title: item.querySelector('.heading-title').value,
-                description: item.querySelector('.heading-description').value
-            });
-        });
-        
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(headings));
-        alert('Başlıklar kaydedildi! Bir sonraki analizde kullanabilirsiniz.');
-    });
-    
-    // localStorage'dan başlıkları yükle
-    function loadSavedHeadings() {
-        const savedHeadings = localStorage.getItem(STORAGE_KEY);
-        if (!savedHeadings) return;
-        
-        try {
-            const headings = JSON.parse(savedHeadings);
-            if (!headings || !headings.length) return;
-            
-            // Mevcut tüm başlıkları temizle
-            const existingHeadings = document.querySelectorAll('.heading-item');
-            existingHeadings.forEach(item => item.remove());
-            
-            // Kaydedilmiş başlıkları ekle
-            headings.forEach((heading, index) => {
-                const headingTemplate = document.querySelector('.heading-item');
-                let headingItem;
-                
-                if (index === 0 && headingTemplate) {
-                    headingItem = headingTemplate;
-                } else {
-                    const template = document.querySelector('.heading-item');
-                    headingItem = template.cloneNode(true);
-                    headingsContainer.appendChild(headingItem);
-                }
-                
-                headingItem.querySelector('.heading-title').value = heading.title;
-                headingItem.querySelector('.heading-description').value = heading.description;
-                
-                // Silme butonunu ayarla
-                const removeBtn = headingItem.querySelector('.remove-heading-btn');
-                removeBtn.addEventListener('click', function() {
-                    headingItem.remove();
-                    updateRemoveButtons();
-                });
-            });
-            
-            updateRemoveButtons();
-            
-            // Kaydedilmiş başlıklar bulunduğunu bildir
-            const infoEl = document.createElement('div');
-            infoEl.className = 'alert alert-info alert-dismissible fade show mt-2';
-            infoEl.innerHTML = `
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                <i class="bi bi-info-circle"></i> Kaydedilmiş başlıklar yüklendi.
-            `;
-            headingsContainer.parentNode.insertBefore(infoEl, headingsContainer.nextSibling);
-            
-            // 5 saniye sonra bilgi mesajını kaldır
-            setTimeout(() => {
-                infoEl.remove();
-            }, 5000);
-            
-        } catch (e) {
-            console.error('Kaydedilmiş başlıklar yüklenemedi:', e);
-            localStorage.removeItem(STORAGE_KEY);
-        }
-    }
-    
-    // Başlangıç kurulumu
-    setupRemoveButtons();
-    enableValidation();
-    
-    // "Özel Başlıkla Analiz Et" butonuna tıklandığında kaydedilmiş başlıkları yükle
-    document.querySelector('a[data-bs-target="#customHeadingsModal"]').addEventListener('click', function() {
-        loadSavedHeadings();
-    });
+    };
 });
 </script>
 {% endblock %} 

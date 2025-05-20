@@ -2,57 +2,273 @@
 
 {% block title %}Smart Doc Insight - Hakkında{% endblock %}
 
+{% block styles %}
+<link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-<div class="row">
-    <div class="col-md-8 mx-auto">
-        <h1 class="mb-4">Smart Doc Insight Hakkında</h1>
+<!-- Hero Bölümü -->
+<section class="hero-section mb-5">
+    <div class="hero-content">
+        <div class="text-center mb-4">
+            <img src="{{ url_for('static', filename='img/document-icon.svg') }}" alt="Smart Doc Insight" class="doc-icon mb-3">
+            <h1 class="hero-title">Hakkımızda</h1>
+            <p class="hero-subtitle mx-auto" style="max-width: 700px;">Smart Doc Insight ile öğrenci projelerinin analizi daha kolay ve verimli hale geliyor</p>
+        </div>
+    </div>
+</section>
+
+<div class="container">
+    <!-- Başlık -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h2 class="fw-bold mb-1">Projemiz Hakkında</h2>
+            <p class="text-muted">Öğrenci projelerini değerlendirmede yeni bir dönem</p>
+        </div>
+    </div>
+    
+    <!-- Vizyonumuz ve Projemiz -->
+    <div class="row mb-5">
+        <!-- Vizyonumuz kartı - tek başına bir kart olarak -->
+        <div class="col-md-4 mb-4">
+            <div class="feature-card text-center h-100">
+                <div class="feature-icon">
+                    <i class="bi bi-lightbulb"></i>
+                </div>
+                <h3 class="feature-title">Vizyonumuz</h3>
+                <p class="feature-description">Öğrenci projelerini değerlendirme sürecini kolaylaştırmak ve yapay zeka destekli analiz ile eğitimde yeni ufuklar açmak.</p>
+            </div>
+        </div>
         
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">Projemiz</h5>
-                <p class="card-text">
-                    Smart Doc Insight, öğrenci projelerinin yapay zeka ile analiz edilmesini sağlayan bir web uygulamasıdır. Bu platform, öğrencilerin PDF formatındaki dökümanlarını yükleyip paylaşmalarına ve öğretmenlerin bu dökümanları yapay zeka teknolojisi ile incelemelerine olanak tanır.
+        <!-- Projemiz kartı - daha detaylı açıklama ile -->
+        <div class="col-md-8 mb-4">
+            <div class="feature-card h-100">
+                <h3 class="feature-title mb-3">Projemiz</h3>
+                <p class="feature-description">
+                    Smart Doc Insight, öğrenci projelerinin yapay zeka ile analiz edilmesini sağlayan yenilikçi bir web uygulamasıdır. Bu platform, öğrencilerin PDF formatındaki dökümanlarını yükleyip paylaşmalarına ve öğretmenlerin bu dökümanları gelişmiş yapay zeka teknolojisi ile derinlemesine incelemelerine olanak tanır.
                 </p>
-            </div>
-        </div>
-        
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">Teknoloji</h5>
-                <p class="card-text">
-                    Projemiz aşağıdaki teknolojileri kullanmaktadır:
-                </p>
-                <ul>
-                    <li><b>Backend:</b> Python Flask framework</li>
-                    <li><b>Frontend:</b> HTML, CSS, Bootstrap ve JavaScript</li>
-                    <li><b>Veritabanı:</b> MongoDB</li>
-                    <li><b>Yapay Zeka:</b> Ollama ile çalışan Mistral:instruct modeli</li>
-                    <li><b>PDF İşleme:</b> pdfplumber kütüphanesi</li>
-                </ul>
-            </div>
-        </div>
-        
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">Nasıl Çalışır?</h5>
-                <ol>
-                    <li>Öğrenciler hesap oluşturur ve grup projelerini sisteme kaydeder.</li>
-                    <li>Her proje için PDF formatında dökümanlar yüklenir.</li>
-                    <li>Öğretmenler, yüklenen dökümanları görüntüleyebilir.</li>
-                    <li>Dökümanlar, AI tarafından analiz edilir ve önemli bilgiler çıkarılır.</li>
-                    <li>Analiz sonuçları yapılandırılmış bir şekilde öğretmene sunulur.</li>
-                </ol>
-            </div>
-        </div>
-        
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">İletişim</h5>
-                <p class="card-text">
-                    Sorularınız veya geri bildirimleriniz için lütfen <a href="mailto:info@smartdocinsight.com">info@smartdocinsight.com</a> adresine e-posta gönderin.
+                <p class="feature-description mt-3">
+                    Projemiz tamamen açık kaynak teknolojilere dayanır ve yerel LLM modelleri kullanarak gizliliği ön planda tutar. Öğrencilerin ve eğitimcilerin hem zamanlarını daha verimli kullanmalarını hem de daha nitelikli geri bildirimler alabilmelerini sağlamak temel hedefimizdir.
                 </p>
             </div>
         </div>
     </div>
+
+    <!-- Teknolojilerimiz Başlık -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h2 class="fw-bold mb-1">Kullandığımız Teknolojiler</h2>
+            <p class="text-muted">Modern ve güvenilir altyapı</p>
+        </div>
+    </div>
+    
+    <!-- Teknoloji Kartları -->
+    <div class="row mb-5">
+        <!-- Backend -->
+        <div class="col-md-4 mb-4">
+            <div class="feature-card text-center h-100">
+                <div class="feature-icon">
+                    <i class="bi bi-server"></i>
+                </div>
+                <h3 class="feature-title">Backend</h3>
+                <p class="feature-description">Python Flask framework ile güçlü ve esnek bir altyapı.</p>
+            </div>
+        </div>
+        
+        <!-- Frontend -->
+        <div class="col-md-4 mb-4">
+            <div class="feature-card text-center h-100">
+                <div class="feature-icon">
+                    <i class="bi bi-window"></i>
+                </div>
+                <h3 class="feature-title">Frontend</h3>
+                <p class="feature-description">HTML, CSS, Bootstrap ve JavaScript ile modern kullanıcı arayüzü.</p>
+            </div>
+        </div>
+        
+        <!-- Veritabanı -->
+        <div class="col-md-4 mb-4">
+            <div class="feature-card text-center h-100">
+                <div class="feature-icon">
+                    <i class="bi bi-database"></i>
+                </div>
+                <h3 class="feature-title">Veritabanı</h3>
+                <p class="feature-description">MongoDB ile esnek ve ölçeklenebilir veri yapısı.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-5">
+        <!-- Yapay Zeka -->
+        <div class="col-md-6 mb-4">
+            <div class="feature-card h-100">
+                <div class="row align-items-center">
+                    <div class="col-md-3 text-center">
+                        <div class="feature-icon">
+                            <i class="bi bi-cpu"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <h3 class="feature-title">Yapay Zeka</h3>
+                        <p class="feature-description">Ollama ile çalışan LLM modelleri kullanarak doküman analizi ve metin anlama.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PDF İşleme -->
+        <div class="col-md-6 mb-4">
+            <div class="feature-card h-100">
+                <div class="row align-items-center">
+                    <div class="col-md-3 text-center">
+                        <div class="feature-icon">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <h3 class="feature-title">PDF İşleme</h3>
+                        <p class="feature-description">pdfplumber kütüphanesi ile PDF belgelerinden içerik çıkarma ve analiz etme.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nasıl Çalışır Başlık -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h2 class="fw-bold mb-1">Nasıl Çalışır?</h2>
+            <p class="text-muted">Basit ve etkili bir süreç</p>
+        </div>
+    </div>
+    
+    <!-- Çalışma Adımları -->
+    <div class="row mb-5">
+        <div class="col-md-6 mb-4">
+            <div class="feature-card h-100">
+                <div class="row align-items-center">
+                    <div class="col-md-3 text-center">
+                        <div class="feature-icon">
+                            <i class="bi bi-people"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <h3 class="feature-title">1. Hesap Oluşturma</h3>
+                        <p class="feature-description">Öğrenciler hesap oluşturur ve grup projelerini sisteme kaydeder.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="feature-card h-100">
+                <div class="row align-items-center">
+                    <div class="col-md-3 text-center">
+                        <div class="feature-icon">
+                            <i class="bi bi-cloud-arrow-up"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <h3 class="feature-title">2. PDF Yükleme</h3>
+                        <p class="feature-description">Her proje için PDF formatında dökümanlar sisteme yüklenir.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="feature-card h-100">
+                <div class="row align-items-center">
+                    <div class="col-md-3 text-center">
+                        <div class="feature-icon">
+                            <i class="bi bi-eye"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <h3 class="feature-title">3. Döküman Görüntüleme</h3>
+                        <p class="feature-description">Öğretmenler, yüklenen dökümanları görüntüler ve analize gönderir.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="feature-card h-100">
+                <div class="row align-items-center">
+                    <div class="col-md-3 text-center">
+                        <div class="feature-icon">
+                            <i class="bi bi-cpu"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <h3 class="feature-title">4. Yapay Zeka Analizi</h3>
+                        <p class="feature-description">Yapay zeka dökümanları analiz eder ve önemli bilgileri çıkarır.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="feature-card h-100">
+                <div class="row align-items-center">
+                    <div class="col-md-3 text-center">
+                        <div class="feature-icon">
+                            <i class="bi bi-bar-chart"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <h3 class="feature-title">5. Sonuçların Sunulması</h3>
+                        <p class="feature-description">Analiz sonuçları yapılandırılmış bir şekilde öğretmene sunulur.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- İletişim Başlık -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h2 class="fw-bold mb-1">İletişim</h2>
+            <p class="text-muted">Bize ulaşın</p>
+        </div>
+    </div>
+    
+    <!-- İletişim Kartı -->
+    <div class="row mb-5">
+        <div class="col-md-6 mx-auto">
+            <div class="feature-card text-center">
+                <div class="feature-icon mb-3">
+                    <i class="bi bi-envelope"></i>
+                </div>
+                <h3 class="feature-title mb-3">Bizimle İletişime Geçin</h3>
+                <p class="feature-description mx-auto">
+                    Sorularınız, önerileriniz veya geri bildirimleriniz için lütfen bizimle iletişime geçin.
+                </p>
+                <a href="mailto:info@smartdocinsight.com" class="btn btn-primary mt-3 px-4 py-2">
+                    <i class="bi bi-envelope-fill me-2"></i>info@smartdocinsight.com
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
-{% endblock %} 
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animasyon efektleri için özellik kartlarına hover sınıfları ekleme
+        const featureCards = document.querySelectorAll('.feature-card');
+        
+        featureCards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.classList.add('shadow-lg');
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.classList.remove('shadow-lg');
+            });
+        });
+    });
+</script>
+{% endblock %}

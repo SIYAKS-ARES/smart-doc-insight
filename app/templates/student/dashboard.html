@@ -2,82 +2,137 @@
 
 {% block title %}Smart Doc Insight - Öğrenci Paneli{% endblock %}
 
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Projelerim</h1>
-    <a href="{{ url_for('student.new_project') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Yeni Proje
-    </a>
-</div>
+{% block styles %}
+<link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    .hero-section.compact {
+        padding: 1.5rem 0;
+        margin-bottom: 1.5rem;
+    }
+    .hero-section.compact .hero-title {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    .hero-section.compact .hero-subtitle {
+        font-size: 1rem;
+        margin-bottom: 0;
+        opacity: 0.9;
+    }
+    .section-heading {
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .compact-card {
+        padding: 1.5rem;
+    }
+</style>
+{% endblock %}
 
-{% if projects|length > 0 %}
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        {% for project in projects %}
-            <div class="col">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ project.name }}</h5>
-                        <p class="card-text text-muted small">
-                            Oluşturulma: {{ project.created_at.strftime('%d.%m.%Y %H:%M') }}
+{% block content %}
+<!-- Kompakt Hero Bölümü -->
+<section class="hero-section compact">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="hero-title">Projelerim</h1>
+                <p class="hero-subtitle mb-0">Tüm projelerinizi görüntüleyin ve yönetin</p>
+            </div>
+            <div>
+                <a href="{{ url_for('student.new_project') }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-circle"></i> Yeni Proje
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container">
+    {% if projects|length > 0 %}
+        <div class="row">
+            <div class="col-12">
+                <h2 class="fw-bold section-heading d-flex justify-content-between align-items-center">
+                    <span>Proje Koleksiyonum</span>
+                    <small class="text-muted fs-6">{{ projects|length }} proje</small>
+                </h2>
+            </div>
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for project in projects %}
+                <div class="col">
+                    <div class="feature-card h-100 compact-card">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h4 class="mb-1">{{ project.name }}</h4>
+                            <span class="badge bg-primary rounded-pill">{{ project.files|length }}</span>
+                        </div>
+                        
+                        <p class="text-muted small mb-2">
+                            <i class="bi bi-calendar3"></i> {{ project.created_at.strftime('%d.%m.%Y') }}
                         </p>
-                        <p class="card-text">
+                        
+                        <p class="feature-description mb-3">
                             {% if project.description %}
-                                {{ project.description|truncate(100) }}
+                                {{ project.description|truncate(80) }}
                             {% else %}
                                 <span class="text-muted">Açıklama yok</span>
                             {% endif %}
                         </p>
                         
-                        <div class="mb-3">
-                            <strong>Grup Üyeleri:</strong>
-                            {% if project.group_members|length > 0 %}
-                                <ul class="list-unstyled mb-0 mt-1">
-                                    {% for member in project.group_members %}
-                                        <li><small>• {{ member.name }} ({{ member.responsibility }})</small></li>
-                                    {% endfor %}
-                                </ul>
-                            {% else %}
-                                <p class="mb-0 mt-1"><small class="text-muted">Grup üyesi eklenmedi</small></p>
-                            {% endif %}
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-people-fill text-primary me-2"></i>
+                            <strong>Grup:</strong>
+                            <span class="badge bg-light text-dark ms-2">{{ project.group_members|length }}</span>
                         </div>
                         
-                        <div class="mb-3">
-                            <strong>Dosyalar:</strong>
-                            {% if project.files|length > 0 %}
-                                <ul class="list-unstyled mb-0 mt-1">
-                                    {% for file in project.files %}
-                                        <li><small>• {{ file.filename }}</small></li>
-                                    {% endfor %}
-                                </ul>
-                            {% else %}
-                                <p class="mb-0 mt-1"><small class="text-muted">Dosya yüklenmedi</small></p>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="card-footer bg-transparent">
-                        <div class="d-flex justify-content-between">
-                            <a href="{{ url_for('student.view_project', project_id=project._id) }}" class="btn btn-sm btn-primary">
+                        <div class="mt-3 d-flex justify-content-between">
+                            <a href="{{ url_for('student.view_project', project_id=project._id) }}" class="btn btn-primary btn-sm">
                                 <i class="bi bi-eye"></i> Görüntüle
                             </a>
-                            <a href="{{ url_for('student.edit_project', project_id=project._id) }}" class="btn btn-sm btn-outline-secondary">
+                            <a href="{{ url_for('student.edit_project', project_id=project._id) }}" class="btn btn-outline-secondary btn-sm">
                                 <i class="bi bi-pencil"></i> Düzenle
                             </a>
                         </div>
                     </div>
                 </div>
-            </div>
-        {% endfor %}
-    </div>
-{% else %}
-    <div class="card">
-        <div class="card-body text-center py-5">
-            <i class="bi bi-folder-plus" style="font-size: 4rem; color: #ddd;"></i>
-            <h3 class="mt-3">Henüz proje oluşturmadınız</h3>
-            <p class="text-muted">İlk projenizi oluşturmak için "Yeni Proje" butonuna tıklayın.</p>
-            <a href="{{ url_for('student.new_project') }}" class="btn btn-primary mt-2">
-                <i class="bi bi-plus-circle"></i> Yeni Proje Oluştur
-            </a>
+            {% endfor %}
         </div>
-    </div>
-{% endif %}
+    {% else %}
+        <div class="row mt-3">
+            <div class="col">
+                <div class="feature-card text-center py-4 compact-card">
+                    <div class="mb-3">
+                        <i class="bi bi-folder-plus fs-1 text-muted"></i>
+                    </div>
+                    <h4 class="mb-2">Henüz Projeniz Yok</h4>
+                    <p class="mb-3">
+                        İlk projenizi oluşturarak Smart Doc Insight'ı keşfetmeye başlayın.
+                    </p>
+                    <a href="{{ url_for('student.new_project') }}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-circle"></i> Yeni Proje Oluştur
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animasyon efektleri için özellik kartlarına hover sınıfları ekleme
+        const featureCards = document.querySelectorAll('.feature-card');
+        
+        featureCards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.classList.add('shadow');
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.classList.remove('shadow');
+            });
+        });
+    });
+</script>
 {% endblock %} 

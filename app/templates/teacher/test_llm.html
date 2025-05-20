@@ -4,106 +4,169 @@
 
 {% block content %}
 <div class="container">
-    <div class="card mb-4">
-        <div class="card-header {% if test_result.provider == 'lmstudio' %}bg-success{% else %}bg-primary{% endif %} text-white">
-            <h3 class="mb-0">
-                {% if test_result.provider == 'lmstudio' %}
-                    <i class="bi bi-braces"></i> LM Studio Test Sonuçları
-                {% else %}
-                    <i class="bi bi-robot"></i> Ollama Test Sonuçları
-                {% endif %}
-            </h3>
-            <p class="text-muted mb-0 mt-1 text-white-50">Test zamanı: {{ test_result.test_time }}</p>
+    <div class="card mb-4 shadow border-0">
+        <div class="card-header bg-dark text-white d-flex align-items-center" style="border-bottom: none; border-radius: 0.75rem 0.75rem 0 0;">
+            <i class="bi bi-braces fs-3 me-3"></i>
+            <div>
+                <h3 class="mb-0">LM Studio Test Sonuçları</h3>
+                <p class="text-white-50 mb-0 mt-1">Test zamanı: {{ test_result.test_time }}</p>
+            </div>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
+            <!-- Bağlantı Durumu -->
             <div class="mb-4">
-                <h5>Bağlantı Durumu</h5>
-                <div class="alert {% if test_result.provider == 'lmstudio' %}alert-success{% else %}alert-primary{% endif %}">
-                    <i class="bi bi-info-circle"></i> Aktif LLM Sağlayıcısı: <strong>{{ test_result.provider_name }}</strong><br>
-                    <i class="bi bi-tag"></i> Model: <strong>{{ test_result.model_name }}</strong>
+                <h5 class="d-flex align-items-center">
+                    <i class="bi bi-hdd-network me-2 text-dark"></i>
+                    Bağlantı Durumu
+                </h5>
+                <div class="alert {% if test_result.model_response %}alert-success{% else %}alert-warning{% endif %} d-flex align-items-center">
+                    <i class="bi {% if test_result.model_response %}bi-check-circle-fill{% else %}bi-exclamation-triangle-fill{% endif %} fs-5 me-3"></i>
+                    <div>
+                        <span class="fw-medium">
+                            {% if test_result.model_response %}
+                                LM Studio servisine bağlantı başarılı
+                            {% else %}
+                                LM Studio servisine sınırlı erişim
+                            {% endif %}
+                        </span>
+                        <p class="mb-0 small">
+                            {% if test_result.model_response %}
+                                Servis çalışıyor ve istemciye yanıt veriyor.
+                            {% else %}
+                                LM Studio API sunucusu etkin olmayabilir veya model yüklenmemiş olabilir.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Model Bilgileri -->
+            <div class="mb-4">
+                <h5 class="d-flex align-items-center">
+                    <i class="bi bi-collection me-2 text-dark"></i>
+                    Model Bilgileri
+                </h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Aktif LLM Sağlayıcısı</th>
+                                <th>Model</th>
+                                <th>Durum</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="fw-medium">{{ test_result.provider_name }}</td>
+                                <td>{{ test_result.model_name }}</td>
+                                <td>
+                                    <span class="badge {% if test_result.model_response %}bg-success{% else %}bg-warning{% endif %}">
+                                        {% if test_result.model_response %}Aktif{% else %}Kontrol Gerekli{% endif %}
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
+            <!-- Test Sorgusu Sonucu -->
             <div class="mb-4">
-                <h5>Test Sorgusu Sonucu</h5>
+                <h5 class="d-flex align-items-center">
+                    <i class="bi bi-chat-square-text me-2 text-dark"></i>
+                    Test Sorgusu Sonucu
+                </h5>
                 {% if test_result.model_response %}
-                    <div class="alert alert-success mb-3">
-                        <i class="bi bi-check-circle-fill"></i> Model başarıyla yanıt döndürdü
+                    <div class="alert alert-success d-flex align-items-center mb-3">
+                        <i class="bi bi-check-circle-fill fs-5 me-3"></i>
+                        <div>
+                            <span class="fw-medium">Model başarıyla yanıt döndürdü</span>
+                            <p class="mb-0 small text-success">LLM işlevsel durumda ve sorguları işleyebiliyor.</p>
+                        </div>
                     </div>
-                    <div class="card">
-                        <div class="card-header">Yanıt</div>
-                        <div class="card-body">
-                            <pre class="mb-0">{{ test_result.model_response }}</pre>
+                    <div class="card shadow-sm border-0 mb-3">
+                        <div class="card-header bg-light d-flex align-items-center">
+                            <i class="bi bi-chat-left-text text-dark me-2"></i>
+                            <span class="fw-medium">Yanıt</span>
+                        </div>
+                        <div class="card-body bg-light bg-opacity-50">
+                            <pre class="mb-0 p-2" style="white-space: pre-wrap; font-family: var(--font-family);">{{ test_result.model_response }}</pre>
                         </div>
                     </div>
                 {% elif test_result.error %}
-                    <div class="alert alert-danger">
-                        <i class="bi bi-x-circle-fill"></i> Hata: {{ test_result.error }}
+                    <div class="alert alert-danger d-flex align-items-center">
+                        <i class="bi bi-x-circle-fill fs-5 me-3"></i>
+                        <div>
+                            <span class="fw-medium">Hata: {{ test_result.error }}</span>
+                        </div>
                     </div>
                     
                     {% if test_result.error_tip %}
-                        <div class="alert alert-warning">
-                            <i class="bi bi-lightbulb"></i> <strong>İpucu:</strong> {{ test_result.error_tip }}
+                        <div class="alert alert-warning d-flex align-items-center mt-3">
+                            <i class="bi bi-lightbulb fs-5 me-3"></i>
+                            <div>
+                                <span class="fw-medium">İpucu:</span> {{ test_result.error_tip }}
+                            </div>
                         </div>
                     {% endif %}
                     
                     {% if test_result.traceback %}
-                        <div class="card mt-3">
-                            <div class="card-header">Hata Ayrıntıları</div>
-                            <div class="card-body">
-                                <pre class="mb-0" style="max-height: 300px; overflow-y: auto;">{{ test_result.traceback }}</pre>
+                        <div class="card shadow-sm border-0 mt-3">
+                            <div class="card-header bg-light d-flex align-items-center">
+                                <i class="bi bi-bug text-danger me-2"></i>
+                                <span class="fw-medium">Hata Ayrıntıları</span>
+                            </div>
+                            <div class="card-body bg-light bg-opacity-50">
+                                <pre class="mb-0 p-2" style="max-height: 300px; overflow-y: auto; font-size: 0.85rem; color: #d63939;">{{ test_result.traceback }}</pre>
                             </div>
                         </div>
                     {% endif %}
                 {% else %}
-                    <div class="alert alert-warning">
-                        <i class="bi bi-exclamation-triangle"></i> Test çalıştırılamadı
+                    <div class="alert alert-warning d-flex align-items-center">
+                        <i class="bi bi-exclamation-triangle-fill fs-5 me-3"></i>
+                        <div>
+                            <span class="fw-medium">Test çalıştırılamadı</span>
+                            <p class="mb-0 small">Beklenmeyen bir nedenden dolayı test tamamlanamadı.</p>
+                        </div>
                     </div>
                 {% endif %}
             </div>
             
-            <div class="mb-4">
-                <h5>Kurulum ve Kullanım Bilgileri</h5>
-                <div class="card">
-                    <div class="card-body">
-                        {% if test_result.provider == 'lmstudio' %}
-                            <h6>LM Studio'yu Ayarlamak İçin:</h6>
-                            <ol>
-                                <li>LM Studio uygulamasını <a href="https://lmstudio.ai" target="_blank">lmstudio.ai</a> adresinden indirin.</li>
-                                <li>LM Studio uygulamasını açın ve bir model yükleyin.</li>
-                                <li>Python bağlantısı için: <code>pip install lmstudio</code></li>
-                                <li>LM Studio uygulamasında Settings > API Server seçeneğini etkinleştirin.</li>
-                                <li>Model adını <a href="{{ url_for('teacher.select_llm_provider') }}">LLM Sağlayıcı Seçimi</a> sayfasından ayarlayın.</li>
-                            </ol>
-                        {% else %}
-                            <h6>Ollama'yı Ayarlamak İçin:</h6>
-                            <ol>
-                                <li>Ollama'yı <a href="https://ollama.ai/download" target="_blank">ollama.ai</a> adresinden indirin.</li>
-                                <li>Ollama servisini başlatın: <code>ollama serve</code></li>
-                                <li>Modeli indirin: <code>ollama pull {{ test_result.model_name }}</code></li>
-                                <li>Port ve host ayarlarını <a href="{{ url_for('teacher.select_llm_provider') }}">LLM Sağlayıcı Seçimi</a> sayfasından yapılandırın.</li>
-                            </ol>
-                        {% endif %}
+            <!-- Kurulum Bilgileri -->
+            <div class="mb-3">
+                <h5 class="d-flex align-items-center">
+                    <i class="bi bi-gear me-2 text-dark"></i>
+                    Kurulum ve Kullanım Bilgileri
+                </h5>
+                <div class="card shadow-sm border-0">
+                    <div class="card-body bg-light bg-opacity-50">
+                        <h6 class="d-flex align-items-center">
+                            <i class="bi bi-braces text-dark me-2"></i>
+                            LM Studio'yu Ayarlamak İçin:
+                        </h6>
+                        <ol class="mb-0 ps-3">
+                            <li class="mb-2">LM Studio uygulamasını <a href="https://lmstudio.ai" target="_blank" class="text-decoration-none">lmstudio.ai</a> adresinden indirin.</li>
+                            <li class="mb-2">LM Studio uygulamasını açın ve bir model yükleyin.</li>
+                            <li class="mb-2">Python bağlantısı için: <code>pip install lmstudio</code></li>
+                            <li class="mb-2">LM Studio uygulamasında Settings > API Server seçeneğini etkinleştirin.</li>
+                            <li class="mb-0">Model adını <a href="{{ url_for('teacher.select_llm_provider') }}" class="text-decoration-none">LLM Sağlayıcı Seçimi</a> sayfasından ayarlayın.</li>
+                        </ol>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="card-footer">
-            <div class="row">
-                <div class="col">
-                    <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-secondary">
-                        <i class="bi bi-arrow-left"></i> Panele Dön
-                    </a>
-                    <a href="{{ url_for('teacher.select_llm_provider') }}" class="btn btn-primary">
-                        <i class="bi bi-sliders"></i> LLM Sağlayıcı Ayarları
-                    </a>
-                </div>
-                <div class="col text-end">
-                    <a href="{{ url_for('teacher.test_llm') }}" class="btn {% if test_result.provider == 'lmstudio' %}btn-success{% else %}btn-primary{% endif %}">
-                        <i class="bi bi-arrow-clockwise"></i> Testi Tekrarla
-                    </a>
-                </div>
+        <div class="card-footer bg-white d-flex justify-content-between" style="border-top: none; border-radius: 0 0 0.75rem 0.75rem;">
+            <div>
+                <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-light d-flex align-items-center me-2" style="margin-right: 0.5rem;">
+                    <i class="bi bi-arrow-left me-2"></i> Panele Dön
+                </a>
+                <a href="{{ url_for('teacher.select_llm_provider') }}" class="btn btn-dark d-flex align-items-center">
+                    <i class="bi bi-sliders me-2"></i> LLM Sağlayıcı Ayarları
+                </a>
             </div>
+            <a href="{{ url_for('teacher.test_llm') }}" class="btn btn-dark d-flex align-items-center">
+                <i class="bi bi-arrow-clockwise me-2"></i> Testi Tekrarla
+            </a>
         </div>
     </div>
 </div>

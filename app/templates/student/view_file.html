@@ -1,107 +1,381 @@
 {% extends "base.html" %}
 
-{% block title %}Smart Doc Insight - Dosya Görüntüleme{% endblock %}
+{% block title %}Smart Doc Insight - Dosya: {{ file_data.filename }}{% endblock %}
+
+{% block styles %}
+<link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+<style>
+    /* Genel stil tanımlamaları */
+    .hero-section.compact {
+        padding: 1.5rem 0;
+        margin-bottom: 1.5rem;
+    }
+    .hero-section.compact .hero-title {
+        font-size: 1.8rem;
+        margin-bottom: 0.25rem;
+    }
+    .hero-subtitle {
+        font-size: 1rem;
+        margin-bottom: 0;
+        opacity: 0.9;
+    }
+    .compact-card {
+        padding: 1.5rem;
+    }
+    .btn-action {
+        border-radius: 4px;
+        padding: 0.375rem 0.75rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .btn-back {
+        color: #616161;
+        border-color: #e0e0e0;
+        background-color: #FAFAFA;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.375rem 0.85rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .btn-back:hover {
+        background-color: #f0f0f0;
+        transform: translateY(-1px);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .meta-info {
+        display: inline-flex;
+        align-items: center;
+        margin-right: 15px;
+    }
+    .info-icon {
+        margin-right: 10px;
+        font-size: 1.2em;
+    }
+    .status-badge {
+        padding: 0.35em 0.65em;
+        border-radius: 20px;
+        font-weight: 500;
+        letter-spacing: 0.01em;
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+    }
+    .status-badge i {
+        margin-right: 0.25rem;
+    }
+    .status-analyzed {
+        background-color: rgba(52, 168, 83, 0.15);
+        color: #34A853;
+        border: 1px solid rgba(52, 168, 83, 0.3);
+    }
+    .status-pending {
+        background-color: rgba(95, 99, 104, 0.15);
+        color: #5F6368;
+        border: 1px solid rgba(95, 99, 104, 0.3);
+    }
+    /* Kapanabilir bölümler için stil */
+    .collapsible-section {
+        margin-bottom: 1.5rem;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .collapsible-header {
+        padding: 1rem 1.25rem;
+        background: linear-gradient(to right, rgba(59, 130, 246, 0.05), rgba(147, 197, 253, 0.05));
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.2s ease;
+    }
+    .collapsible-header:hover {
+        background: linear-gradient(to right, rgba(59, 130, 246, 0.1), rgba(147, 197, 253, 0.1));
+    }
+    .collapsible-header h4 {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+    }
+    .collapsible-content {
+        padding: 1.25rem;
+        background-color: white;
+        border: 1px solid rgba(0,0,0,0.05);
+        border-top: none;
+    }
+    /* Modern kart tasarımı */
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
+        border: none;
+        transition: all 0.3s ease;
+    }
+    .card:hover {
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1>Dosya: {{ file_data.filename }}</h1>
-        <p class="text-muted">Proje: <a href="{{ url_for('student.view_project', project_id=project._id) }}">{{ project.name }}</a></p>
+<!-- Hero Bölümü -->
+<section class="hero-section compact">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="hero-title">Dosya: {{ file_data.filename }}</h1>
+                <div class="hero-subtitle">
+                    <span class="meta-info">
+                        <i class="bi bi-folder2-open info-icon"></i> 
+                        Proje: <a href="{{ url_for('student.view_project', project_id=project._id) }}" class="text-decoration-none">{{ project.name }}</a>
+                    </span>
+                </div>
+            </div>
+            <div>
+                <a href="{{ url_for('student.view_project', project_id=project._id) }}" class="btn btn-back">
+                    <i class="bi bi-arrow-left"></i> Projeye Dön
+                </a>
+            </div>
+        </div>
     </div>
-    <a href="{{ url_for('student.view_project', project_id=project._id) }}" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> Projeye Dön
-    </a>
-</div>
+</section>
 
-<div class="card mb-4">
-    <div class="card-header">
-        <h5 class="mb-0">Dosya Bilgileri</h5>
+<div class="container">
+    <!-- Dosya Bilgileri -->
+    <div class="card mb-4">
+        <div class="card-header d-flex align-items-center">
+            <i class="bi bi-file-earmark-text fs-4 text-primary me-2"></i>
+            <h5 class="mb-0">Dosya Bilgileri</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-box me-3 bg-light rounded-circle p-3">
+                            <i class="bi bi-file-earmark-pdf text-danger"></i>
+                        </div>
+                        <div>
+                            <label class="text-muted small">Dosya Adı</label>
+                            <p class="mb-0 fw-medium">{{ file_data.filename }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box me-3 bg-light rounded-circle p-3">
+                            <i class="bi bi-calendar3 text-info"></i>
+                        </div>
+                        <div>
+                            <label class="text-muted small">Yükleme Tarihi</label>
+                            <p class="mb-0 fw-medium">{{ file_data.upload_date.strftime('%d.%m.%Y %H:%M') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="card-body">
-        <p><strong>Dosya Adı:</strong> {{ file_data.filename }}</p>
-        <p><strong>Yükleme Tarihi:</strong> {{ file_data.upload_date.strftime('%d.%m.%Y %H:%M') }}</p>
-    </div>
-</div>
 
-{% if analysis %}
-<div class="card">
-    <div class="card-header">
-        <h5 class="mb-0">LLM Analizi</h5>
-    </div>
-    <div class="card-body">
-        <div class="mb-3">
-            <div class="d-flex justify-content-between">
-                <div>
-                    <strong>Analiz Tarihi:</strong> {{ analysis.analyzed_at.strftime('%d.%m.%Y %H:%M') }}
+    {% if analysis %}
+    <div class="card mb-4">
+        <div class="card-header d-flex align-items-center">
+            <i class="bi bi-robot fs-4 text-primary me-2"></i>
+            <h5 class="mb-0">LLM Analizi</h5>
+        </div>
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-calendar-date text-muted me-2"></i>
+                    <span>Analiz Tarihi: {{ analysis.analyzed_at.strftime('%d.%m.%Y %H:%M') }}</span>
                 </div>
                 
                 {% if analysis.content.llm_info %}
-                    <div class="text-muted">
-                        <span class="badge {% if analysis.content.llm_info.provider == 'ollama' %}bg-primary{% else %}bg-success{% endif %}">
+                    <div>
+                        <span class="status-badge status-analyzed">
+                            <i class="bi bi-check-circle-fill"></i>
                             {{ analysis.content.llm_info.provider_name }} / {{ analysis.content.llm_info.model }}
                         </span>
                     </div>
                 {% endif %}
             </div>
-        </div>
-        
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <h6>Grup Üyeleri</h6>
-                <ul class="list-group list-group-flush">
-                    {% for member in analysis.content.grup_uyeleri %}
-                        <li class="list-group-item">{{ member }}</li>
-                    {% else %}
-                        <li class="list-group-item text-muted">Bulunamadı</li>
+            
+            <!-- 1. KISIM: ANALİZ ÖZET BÖLÜMÜ (KAPANABİLİR) -->
+            <div class="collapsible-section mb-4">
+                <div class="collapsible-header" data-bs-toggle="collapse" data-bs-target="#analysisSummaryContent" aria-expanded="true">
+                    <h4><i class="bi bi-file-earmark-text text-info me-2"></i> Analiz Özeti</h4>
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+                <div class="collapsible-content collapse show" id="analysisSummaryContent">
+                    {# Ham sonucu paragraflar halinde göster #}
+                    {% set raw_results = analysis.content.get('ham_sonuc', 'Özet bilgi bulunamadı.').split('\n') %}
+                    {% for paragraph in raw_results %}
+                        {% if paragraph.strip() %}
+                            <p class="mb-2">{{ paragraph }}</p>
+                        {% endif %}
                     {% endfor %}
-                </ul>
+                </div>
             </div>
-            <div class="col-md-6 mb-3">
-                <h6>Sorumluluklar</h6>
-                <ul class="list-group list-group-flush">
-                    {% for resp in analysis.content.sorumluluklar %}
-                        <li class="list-group-item">{{ resp }}</li>
-                    {% else %}
-                        <li class="list-group-item text-muted">Bulunamadı</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div class="col-md-6 mb-3">
-                <h6>Diyagramları Çizenler</h6>
-                <ul class="list-group list-group-flush">
-                    {% for diag in analysis.content.diyagramlar %}
-                        <li class="list-group-item">{{ diag }}</li>
-                    {% else %}
-                        <li class="list-group-item text-muted">Bulunamadı</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div class="col-md-6 mb-3">
-                <h6>Başlıklar</h6>
-                <ul class="list-group list-group-flush">
-                    {% for title in analysis.content.basliklar %}
-                        <li class="list-group-item">{{ title }}</li>
-                    {% else %}
-                        <li class="list-group-item text-muted">Bulunamadı</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div class="col-12">
-                <h6>Eksikler</h6>
-                <ul class="list-group list-group-flush">
-                    {% for miss in analysis.content.eksikler %}
-                        <li class="list-group-item">{{ miss }}</li>
-                    {% else %}
-                        <li class="list-group-item text-muted">Eksik bulunamadı</li>
-                    {% endfor %}
-                </ul>
+            
+            <!-- 2. KISIM: KATEGORİLENDİRİLMİŞ SONUÇLAR (KAPANABİLİR) -->
+            <div class="collapsible-section">
+                <div class="collapsible-header" data-bs-toggle="collapse" data-bs-target="#categorizedResults" aria-expanded="true">
+                    <h4><i class="bi bi-list-check text-success me-2"></i> Kategori Bazlı Sonuçlar</h4>
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+                <div class="collapsible-content collapse show" id="categorizedResults">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-people-fill text-primary me-2"></i>Grup Üyeleri</h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        {% for member in analysis.content.grup_uyeleri %}
+                                            <li class="list-group-item bg-transparent">
+                                                <i class="bi bi-person-fill text-primary me-2"></i>{{ member }}
+                                            </li>
+                                        {% else %}
+                                            <li class="list-group-item bg-transparent text-muted">
+                                                <i class="bi bi-info-circle me-2"></i>Bulunamadı
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-check2-square text-success me-2"></i>Sorumluluklar</h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        {% for resp in analysis.content.sorumluluklar %}
+                                            <li class="list-group-item bg-transparent">
+                                                <i class="bi bi-check-circle-fill text-success me-2"></i>{{ resp }}
+                                            </li>
+                                        {% else %}
+                                            <li class="list-group-item bg-transparent text-muted">
+                                                <i class="bi bi-info-circle me-2"></i>Bulunamadı
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-bar-chart-line text-info me-2"></i>Diyagramlar</h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        {% for diag in analysis.content.diyagramlar %}
+                                            <li class="list-group-item bg-transparent">
+                                                <i class="bi bi-diagram-3 text-info me-2"></i>{{ diag }}
+                                            </li>
+                                        {% else %}
+                                            <li class="list-group-item bg-transparent text-muted">
+                                                <i class="bi bi-info-circle me-2"></i>Bulunamadı
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-bookmark-star text-warning me-2"></i>Başlıklar</h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        {% for title in analysis.content.basliklar %}
+                                            <li class="list-group-item bg-transparent">
+                                                <i class="bi bi-tag-fill text-warning me-2"></i>{{ title }}
+                                            </li>
+                                        {% else %}
+                                            <li class="list-group-item bg-transparent text-muted">
+                                                <i class="bi bi-info-circle me-2"></i>Bulunamadı
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <div class="card h-100 shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Eksikler</h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        {% for miss in analysis.content.eksikler %}
+                                            <li class="list-group-item bg-transparent">
+                                                <i class="bi bi-x-circle-fill text-danger me-2"></i>{{ miss }}
+                                            </li>
+                                        {% else %}
+                                            <li class="list-group-item bg-transparent text-success">
+                                                <i class="bi bi-check-circle-fill me-2"></i>Eksik bulunamadı
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+    {% else %}
+    <div class="alert alert-info d-flex align-items-center p-4" role="alert">
+        <i class="bi bi-info-circle-fill fs-2 me-3"></i>
+        <div>
+            <h5 class="mb-1">Analiz Bekleniyor</h5>
+            <p class="mb-0">Bu dosya henüz analiz edilmemiş. Öğretmenleriniz tarafından analiz edilmesini bekleyin.</p>
+        </div>
+    </div>
+    {% endif %}
 </div>
-{% else %}
-<div class="alert alert-info" role="alert">
-    <i class="bi bi-info-circle"></i> Bu dosya henüz analiz edilmemiş. Öğretmenleriniz tarafından analiz edilmesini bekleyin.
-</div>
-{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Collapsible bölümler için chevron ikonlarının yönetimi
+    const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+    
+    collapsibleHeaders.forEach(header => {
+        const targetId = header.getAttribute('data-bs-target');
+        const target = document.querySelector(targetId);
+        const icon = header.querySelector('.bi-chevron-down');
+        
+        // Başlangıçta açık/kapalı durumuna göre ikonu ayarla
+        if (target.classList.contains('show')) {
+            icon.classList.remove('bi-chevron-down');
+            icon.classList.add('bi-chevron-up');
+        }
+        
+        // Tıklama olayı için Bootstrap collapse olayını dinle
+        target.addEventListener('shown.bs.collapse', function() {
+            icon.classList.remove('bi-chevron-down');
+            icon.classList.add('bi-chevron-up');
+        });
+        
+        target.addEventListener('hidden.bs.collapse', function() {
+            icon.classList.remove('bi-chevron-up');
+            icon.classList.add('bi-chevron-down');
+        });
+    });
+});
+</script>
 {% endblock %} 

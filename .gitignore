@@ -52,3 +52,5 @@ coverage.xml
 
 # Jupyter Notebook checkpoints (kullanıyorsan)
 .ipynb_checkpoints/
+
+images/

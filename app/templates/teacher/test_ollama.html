@@ -4,31 +4,48 @@
 
 {% block content %}
 <div class="container">
-    <div class="card mb-4">
-        <div class="card-header">
-            <h3>Ollama Test Sonuçları</h3>
-            <p class="text-muted">Test zamanı: {{ test_result.test_time }}</p>
+    <div class="card mb-4 shadow border-0">
+        <div class="card-header bg-dark text-white d-flex align-items-center" style="border-bottom: none; border-radius: 0.75rem 0.75rem 0 0;">
+            <i class="bi bi-robot fs-3 me-3"></i>
+            <div>
+                <h3 class="mb-0">Ollama Test Sonuçları</h3>
+                <p class="text-white-50 mb-0 mt-1">Test zamanı: {{ test_result.test_time }}</p>
+            </div>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
             <div class="mb-4">
-                <h5>Bağlantı Durumu</h5>
+                <h5 class="d-flex align-items-center">
+                    <i class="bi bi-hdd-network me-2 text-dark"></i>
+                    Bağlantı Durumu
+                </h5>
                 {% if test_result.ollama_check %}
-                    <div class="alert alert-success">
-                        <i class="bi bi-check-circle-fill"></i> Ollama servisine bağlantı başarılı
+                    <div class="alert alert-success d-flex align-items-center">
+                        <i class="bi bi-check-circle-fill fs-5 me-3"></i>
+                        <div>
+                            <span class="fw-medium">Ollama servisine bağlantı başarılı</span>
+                            <p class="mb-0 small text-success">Servis çalışıyor ve istemciye yanıt veriyor.</p>
+                        </div>
                     </div>
                 {% else %}
-                    <div class="alert alert-danger">
-                        <i class="bi bi-x-circle-fill"></i> Ollama servisine bağlantı kurulamadı
+                    <div class="alert alert-danger d-flex align-items-center">
+                        <i class="bi bi-x-circle-fill fs-5 me-3"></i>
+                        <div>
+                            <span class="fw-medium">Ollama servisine bağlantı kurulamadı</span>
+                            <p class="mb-0 small">Lütfen Ollama'nın çalıştığından ve doğru port üzerinden erişilebilir olduğundan emin olun.</p>
+                        </div>
                     </div>
                 {% endif %}
             </div>
 
             <div class="mb-4">
-                <h5>Mevcut Modeller</h5>
+                <h5 class="d-flex align-items-center">
+                    <i class="bi bi-collection me-2 text-dark"></i>
+                    Mevcut Modeller
+                </h5>
                 {% if test_result.available_models %}
                     <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead>
+                        <table class="table table-hover">
+                            <thead class="table-light">
                                 <tr>
                                     <th>Model Adı</th>
                                     <th>Boyut</th>
@@ -39,7 +56,7 @@
                             <tbody>
                                 {% for model in test_result.available_models %}
                                     <tr>
-                                        <td>{{ model.name }}</td>
+                                        <td class="fw-medium">{{ model.name }}</td>
                                         <td>{{ (model.size / 1024 / 1024)|round|int }} MB</td>
                                         <td>{{ model.details.family }}</td>
                                         <td>{{ model.details.parameter_size }}</td>
@@ -49,46 +66,101 @@
                         </table>
                     </div>
                 {% else %}
-                    <div class="alert alert-warning">
-                        <i class="bi bi-exclamation-triangle"></i> Hiç model bulunamadı
+                    <div class="alert alert-warning d-flex align-items-center">
+                        <i class="bi bi-exclamation-triangle-fill fs-5 me-3"></i>
+                        <div>
+                            <span class="fw-medium">Hiç model bulunamadı</span>
+                            <p class="mb-0 small">Lütfen Ollama'ya en az bir model yüklediğinizden emin olun.</p>
+                        </div>
                     </div>
                 {% endif %}
             </div>
 
             <div class="mb-4">
-                <h5>Test Sorgusu Sonucu</h5>
+                <h5 class="d-flex align-items-center">
+                    <i class="bi bi-chat-square-text me-2 text-dark"></i>
+                    Test Sorgusu Sonucu
+                </h5>
                 {% if test_result.model_response %}
-                    <div class="alert alert-success mb-3">
-                        <i class="bi bi-check-circle-fill"></i> Model başarıyla yanıt döndürdü
+                    <div class="alert alert-success d-flex align-items-center mb-3">
+                        <i class="bi bi-check-circle-fill fs-5 me-3"></i>
+                        <div>
+                            <span class="fw-medium">Model başarıyla yanıt döndürdü</span>
+                            <p class="mb-0 small text-success">LLM işlevsel durumda ve sorguları işleyebiliyor.</p>
+                        </div>
                     </div>
-                    <div class="card">
-                        <div class="card-header">Yanıt</div>
-                        <div class="card-body">
-                            <pre class="mb-0">{{ test_result.model_response }}</pre>
+                    <div class="card shadow-sm border-0 mb-3">
+                        <div class="card-header bg-light d-flex align-items-center">
+                            <i class="bi bi-chat-left-text text-dark me-2"></i>
+                            <span class="fw-medium">Yanıt</span>
+                        </div>
+                        <div class="card-body bg-light bg-opacity-50">
+                            <pre class="mb-0 p-2" style="white-space: pre-wrap; font-family: var(--font-family);">{{ test_result.model_response }}</pre>
                         </div>
                     </div>
                 {% elif test_result.error %}
-                    <div class="alert alert-danger">
-                        <i class="bi bi-x-circle-fill"></i> Hata: {{ test_result.error }}
+                    <div class="alert alert-danger d-flex align-items-center">
+                        <i class="bi bi-x-circle-fill fs-5 me-3"></i>
+                        <div>
+                            <span class="fw-medium">Hata: {{ test_result.error }}</span>
+                        </div>
                     </div>
                     {% if test_result.traceback %}
-                        <div class="card mt-3">
-                            <div class="card-header">Hata Ayrıntıları</div>
-                            <div class="card-body">
-                                <pre class="mb-0" style="max-height: 300px; overflow-y: auto;">{{ test_result.traceback }}</pre>
+                        <div class="card shadow-sm border-0 mt-3">
+                            <div class="card-header bg-light d-flex align-items-center">
+                                <i class="bi bi-bug text-danger me-2"></i>
+                                <span class="fw-medium">Hata Ayrıntıları</span>
+                            </div>
+                            <div class="card-body bg-light bg-opacity-50">
+                                <pre class="mb-0 p-2" style="max-height: 300px; overflow-y: auto; font-size: 0.85rem; color: #d63939;">{{ test_result.traceback }}</pre>
                             </div>
                         </div>
                     {% endif %}
                 {% else %}
-                    <div class="alert alert-warning">
-                        <i class="bi bi-exclamation-triangle"></i> Test çalıştırılamadı
+                    <div class="alert alert-warning d-flex align-items-center">
+                        <i class="bi bi-exclamation-triangle-fill fs-5 me-3"></i>
+                        <div>
+                            <span class="fw-medium">Test çalıştırılamadı</span>
+                            <p class="mb-0 small">Beklenmeyen bir nedenden dolayı test tamamlanamadı.</p>
+                        </div>
                     </div>
                 {% endif %}
             </div>
+            
+            <!-- Kurulum Bilgileri -->
+            <div class="mb-3">
+                <h5 class="d-flex align-items-center">
+                    <i class="bi bi-gear me-2 text-dark"></i>
+                    Kurulum ve Kullanım Bilgileri
+                </h5>
+                <div class="card shadow-sm border-0">
+                    <div class="card-body bg-light bg-opacity-50">
+                        <h6 class="d-flex align-items-center">
+                            <i class="bi bi-robot text-dark me-2"></i>
+                            Ollama'yı Ayarlamak İçin:
+                        </h6>
+                        <ol class="mb-0 ps-3">
+                            <li class="mb-2">Ollama'yı <a href="https://ollama.ai/download" target="_blank" class="text-decoration-none">ollama.ai</a> adresinden indirin.</li>
+                            <li class="mb-2">Ollama servisini başlatın: <code>ollama serve</code></li>
+                            <li class="mb-2">Modeli indirin: <code>ollama pull mistral</code> veya tercih ettiğiniz başka bir model</li>
+                            <li class="mb-0">Port ve host ayarlarını <a href="{{ url_for('teacher.select_llm_provider') }}" class="text-decoration-none">LLM Sağlayıcı Seçimi</a> sayfasından yapılandırın.</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="card-footer">
-            <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-secondary">Panele Dön</a>
-            <a href="{{ url_for('teacher.test_ollama') }}" class="btn btn-primary">Testi Tekrarla</a>
+        <div class="card-footer bg-white d-flex justify-content-between" style="border-top: none; border-radius: 0 0 0.75rem 0.75rem;">
+            <div>
+                <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-light d-flex align-items-center me-2" style="margin-right: 0.5rem;">
+                    <i class="bi bi-arrow-left me-2"></i> Panele Dön
+                </a>
+                <a href="{{ url_for('teacher.select_llm_provider') }}" class="btn btn-dark d-flex align-items-center">
+                    <i class="bi bi-sliders me-2"></i> LLM Sağlayıcı Ayarları
+                </a>
+            </div>
+            <a href="{{ url_for('teacher.test_ollama') }}" class="btn btn-dark d-flex align-items-center">
+                <i class="bi bi-arrow-clockwise me-2"></i> Testi Tekrarla
+            </a>
         </div>
     </div>
 </div>
