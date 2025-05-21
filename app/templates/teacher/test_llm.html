@@ -19,21 +19,21 @@
                     <i class="bi bi-hdd-network me-2 text-dark"></i>
                     Bağlantı Durumu
                 </h5>
-                <div class="alert {% if test_result.model_response %}alert-success{% else %}alert-warning{% endif %} d-flex align-items-center">
-                    <i class="bi {% if test_result.model_response %}bi-check-circle-fill{% else %}bi-exclamation-triangle-fill{% endif %} fs-5 me-3"></i>
+                <div class="alert {% if test_result.model_response %}alert-success{% else %}alert-danger{% endif %} d-flex align-items-center">
+                    <i class="bi {% if test_result.model_response %}bi-check-circle-fill{% else %}bi-x-circle-fill{% endif %} fs-5 me-3"></i>
                     <div>
                         <span class="fw-medium">
                             {% if test_result.model_response %}
                                 LM Studio servisine bağlantı başarılı
                             {% else %}
-                                LM Studio servisine sınırlı erişim
+                                LM Studio servisine bağlantı kurulamadı
                             {% endif %}
                         </span>
                         <p class="mb-0 small">
                             {% if test_result.model_response %}
                                 Servis çalışıyor ve istemciye yanıt veriyor.
                             {% else %}
-                                LM Studio API sunucusu etkin olmayabilir veya model yüklenmemiş olabilir.
+                                LM Studio API sunucusu etkin değil veya model yüklenmemiş olabilir.
                             {% endif %}
                         </p>
                     </div>
@@ -60,8 +60,8 @@
                                 <td class="fw-medium">{{ test_result.provider_name }}</td>
                                 <td>{{ test_result.model_name }}</td>
                                 <td>
-                                    <span class="badge {% if test_result.model_response %}bg-success{% else %}bg-warning{% endif %}">
-                                        {% if test_result.model_response %}Aktif{% else %}Kontrol Gerekli{% endif %}
+                                    <span class="badge {% if test_result.model_response %}bg-success{% else %}bg-danger{% endif %}">
+                                        {% if test_result.model_response %}Aktif{% else %}Bağlantı Yok{% endif %}
                                     </span>
                                 </td>
                             </tr>
@@ -122,11 +122,11 @@
                         </div>
                     {% endif %}
                 {% else %}
-                    <div class="alert alert-warning d-flex align-items-center">
-                        <i class="bi bi-exclamation-triangle-fill fs-5 me-3"></i>
+                    <div class="alert alert-danger d-flex align-items-center">
+                        <i class="bi bi-x-circle-fill fs-5 me-3"></i>
                         <div>
-                            <span class="fw-medium">Test çalıştırılamadı</span>
-                            <p class="mb-0 small">Beklenmeyen bir nedenden dolayı test tamamlanamadı.</p>
+                            <span class="fw-medium">Test başarısız</span>
+                            <p class="mb-0 small">LM Studio bağlantısı kurulamadı veya model yanıt vermiyor.</p>
                         </div>
                     </div>
                 {% endif %}
@@ -147,9 +147,9 @@
                         <ol class="mb-0 ps-3">
                             <li class="mb-2">LM Studio uygulamasını <a href="https://lmstudio.ai" target="_blank" class="text-decoration-none">lmstudio.ai</a> adresinden indirin.</li>
                             <li class="mb-2">LM Studio uygulamasını açın ve bir model yükleyin.</li>
-                            <li class="mb-2">Python bağlantısı için: <code>pip install lmstudio</code></li>
-                            <li class="mb-2">LM Studio uygulamasında Settings > API Server seçeneğini etkinleştirin.</li>
-                            <li class="mb-0">Model adını <a href="{{ url_for('teacher.select_llm_provider') }}" class="text-decoration-none">LLM Sağlayıcı Seçimi</a> sayfasından ayarlayın.</li>
+                            <li class="mb-2">LM Studio uygulamasında <strong>Settings > API Server</strong> seçeneğini etkinleştirin.</li>
+                            <li class="mb-2">API sunucusunun varsayılan adresi: <code>http://localhost:1234/v1</code></li>
+                            <li class="mb-0">Model adını ve API adresini <a href="{{ url_for('teacher.select_llm_provider') }}" class="text-decoration-none">LLM Sağlayıcı Seçimi</a> sayfasından ayarlayın.</li>
                         </ol>
                     </div>
                 </div>

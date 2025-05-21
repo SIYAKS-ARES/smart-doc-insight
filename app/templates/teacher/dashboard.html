@@ -36,12 +36,12 @@
                 <h1 class="hero-title">Öğretmen Paneli</h1>
                 <p class="hero-subtitle mb-0">Öğrenci projelerini görüntüleyin ve analiz edin</p>
             </div>
-            <div>
-                <a href="{{ url_for('teacher.select_llm_provider') }}" class="btn btn-primary">
+    <div>
+        <a href="{{ url_for('teacher.select_llm_provider') }}" class="btn btn-primary">
                     <i class="bi bi-robot"></i> LLM Sağlayıcısı
-                </a>
-            </div>
-        </div>
+        </a>
+    </div>
+</div>
     </div>
 </section>
 
@@ -53,19 +53,19 @@
                 <div class="row align-items-center">
                     <div class="col-md-1 text-center">
                         <div class="feature-icon" style="font-size: 1.8rem;">
-                            {% if g.active_llm_provider == 'ollama' %}
-                                <i class="bi bi-robot"></i>
-                            {% elif g.active_llm_provider == 'lmstudio' %}
-                                <i class="bi bi-braces"></i>
-                            {% elif g.active_llm_provider == 'openai' %}
-                                <i class="bi bi-chat-dots"></i>
-                            {% elif g.active_llm_provider == 'gemini' %}
-                                <i class="bi bi-google"></i>
-                            {% elif g.active_llm_provider == 'claude' %}
-                                <i class="bi bi-chat-square-text"></i>
-                            {% else %}
-                                <i class="bi bi-question-circle"></i>
-                            {% endif %}
+                    {% if g.active_llm_provider == 'ollama' %}
+                        <i class="bi bi-robot"></i>
+                    {% elif g.active_llm_provider == 'lmstudio' %}
+                        <i class="bi bi-braces"></i>
+                    {% elif g.active_llm_provider == 'openai' %}
+                        <i class="bi bi-chat-dots"></i>
+                    {% elif g.active_llm_provider == 'gemini' %}
+                        <i class="bi bi-google"></i>
+                    {% elif g.active_llm_provider == 'claude' %}
+                        <i class="bi bi-chat-square-text"></i>
+                    {% else %}
+                        <i class="bi bi-question-circle"></i>
+                    {% endif %}
                         </div>
                     </div>
                     
@@ -74,43 +74,43 @@
                             <span class="{% if g.active_llm_available %}text-success{% else %}text-danger{% endif %}">
                                 {{ g.active_llm_provider|upper }}
                             </span>
-                            {% if g.active_llm_available %}
+                    {% if g.active_llm_available %}
                                 <span class="badge bg-success ms-2">Aktif</span>
-                            {% else %}
+                    {% else %}
                                 <span class="badge bg-danger ms-2">İnaktif</span>
-                            {% endif %}
+                    {% endif %}
                         </h4>
                     </div>
                     
                     <div class="col-md-4">
                         <p class="text-muted mb-0">
                             Bu sağlayıcı kullanılarak yapay zeka analizleri gerçekleştirilir.
-                        </p>
-                    </div>
-                    
+                </p>
+            </div>
+            
                     <div class="col-md-4 text-md-end">
                         <div class="btn-group">
                             <a href="{{ url_for('teacher.select_llm_provider') }}" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-sliders"></i> Değiştir
-                            </a>
-                            
-                            {% if g.active_llm_provider == 'ollama' %}
-                                <a href="{{ url_for('teacher.test_ollama') }}" class="btn btn-sm btn-outline-primary">
+                </a>
+                
+                {% if g.active_llm_provider == 'ollama' %}
+                    <a href="{{ url_for('teacher.test_ollama') }}" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-robot"></i> Test Et
-                                </a>
-                            {% elif g.active_llm_provider == 'lmstudio' %}
-                                <a href="{{ url_for('teacher.test_llm') }}" class="btn btn-sm btn-outline-primary">
+                    </a>
+                {% elif g.active_llm_provider == 'lmstudio' %}
+                    <a href="{{ url_for('teacher.test_llm') }}" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-braces"></i> Test Et
-                                </a>
-                            {% elif g.active_llm_provider in ['openai', 'gemini', 'claude'] %}
-                                <a href="{{ url_for('teacher.test_api_llm') }}" class="btn btn-sm btn-outline-primary">
+                    </a>
+                {% elif g.active_llm_provider in ['openai', 'gemini', 'claude'] %}
+                    <a href="{{ url_for('teacher.test_api_llm') }}" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-key"></i> Test Et
-                                </a>
-                            {% else %}
-                                <a href="{{ url_for('teacher.test_llm') }}" class="btn btn-sm btn-outline-primary">
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('teacher.test_llm') }}" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-check-circle"></i> Test Et
-                                </a>
-                            {% endif %}
+                    </a>
+                {% endif %}
                             
                             <a href="{{ url_for('teacher.fix_old_analyses') }}" class="btn btn-sm btn-outline-secondary">
                                 <i class="bi bi-tools"></i> Bakım
@@ -129,13 +129,13 @@
                 <span>Tüm Projeler</span>
                 <small class="text-muted fs-6">{{ projects|length }} proje</small>
             </h2>
-        </div>
     </div>
+</div>
 
     <!-- Projeler İçeriği -->
-    {% if projects|length > 0 %}
+{% if projects|length > 0 %}
         <div class="row">
-            {% for project in projects %}
+                    {% for project in projects %}
                 <div class="col-md-6 col-lg-4 mb-3">
                     <div class="feature-card h-100 compact-card">
                         <div class="d-flex justify-content-between align-items-start">
@@ -157,13 +157,13 @@
                         </p>
                         
                         <div class="mt-2 text-end">
-                            <a href="{{ url_for('teacher.view_project', project_id=project._id) }}" class="btn btn-sm btn-primary">
-                                <i class="bi bi-eye"></i> Görüntüle
-                            </a>
+                                <a href="{{ url_for('teacher.view_project', project_id=project._id) }}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-eye"></i> Görüntüle
+                                </a>
                         </div>
                     </div>
                 </div>
-            {% endfor %}
+                    {% endfor %}
         </div>
     {% else %}
         <div class="row">
@@ -176,11 +176,11 @@
                     <p class="mb-3">
                         Sistemde henüz öğrenci tarafından yüklenmiş proje bulunmamaktadır.
                     </p>
-                </div>
-            </div>
+        </div>
+    </div>
         </div>
     {% endif %}
-</div>
+    </div>
 {% endblock %}
 
 {% block scripts %}

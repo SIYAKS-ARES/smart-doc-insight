@@ -128,7 +128,7 @@
 <section class="hero-section compact">
     <div class="container">
         <div class="d-flex justify-content-between align-items-center">
-            <div>
+    <div>
                 <h1 class="hero-title">Dosya: {{ file_data.filename }}</h1>
                 <div class="hero-subtitle">
                     <span class="meta-info">
@@ -136,24 +136,24 @@
                         Proje: <a href="{{ url_for('student.view_project', project_id=project._id) }}" class="text-decoration-none">{{ project.name }}</a>
                     </span>
                 </div>
-            </div>
+    </div>
             <div>
                 <a href="{{ url_for('student.view_project', project_id=project._id) }}" class="btn btn-back">
-                    <i class="bi bi-arrow-left"></i> Projeye Dön
-                </a>
-            </div>
+        <i class="bi bi-arrow-left"></i> Projeye Dön
+    </a>
+</div>
         </div>
     </div>
 </section>
 
 <div class="container">
     <!-- Dosya Bilgileri -->
-    <div class="card mb-4">
+<div class="card mb-4">
         <div class="card-header d-flex align-items-center">
             <i class="bi bi-file-earmark-text fs-4 text-primary me-2"></i>
-            <h5 class="mb-0">Dosya Bilgileri</h5>
-        </div>
-        <div class="card-body">
+        <h5 class="mb-0">Dosya Bilgileri</h5>
+    </div>
+    <div class="card-body">
             <div class="row">
                 <div class="col-md-6">
                     <div class="d-flex align-items-center mb-3">
@@ -178,16 +178,16 @@
                     </div>
                 </div>
             </div>
-        </div>
     </div>
+</div>
 
-    {% if analysis %}
+{% if analysis %}
     <div class="card mb-4">
         <div class="card-header d-flex align-items-center">
             <i class="bi bi-robot fs-4 text-primary me-2"></i>
-            <h5 class="mb-0">LLM Analizi</h5>
-        </div>
-        <div class="card-body">
+        <h5 class="mb-0">LLM Analizi</h5>
+    </div>
+    <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div class="d-flex align-items-center">
                     <i class="bi bi-calendar-date text-muted me-2"></i>
@@ -218,9 +218,9 @@
                             <p class="mb-2">{{ paragraph }}</p>
                         {% endif %}
                     {% endfor %}
-                </div>
             </div>
-            
+        </div>
+        
             <!-- 2. KISIM: KATEGORİLENDİRİLMİŞ SONUÇLAR (KAPANABİLİR) -->
             <div class="collapsible-section">
                 <div class="collapsible-header" data-bs-toggle="collapse" data-bs-target="#categorizedResults" aria-expanded="true">
@@ -228,85 +228,85 @@
                     <i class="bi bi-chevron-down"></i>
                 </div>
                 <div class="collapsible-content collapse show" id="categorizedResults">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+        <div class="row">
+            <div class="col-md-6 mb-3">
                             <div class="card h-100 shadow-sm">
                                 <div class="card-header bg-light">
                                     <h5 class="mb-0"><i class="bi bi-people-fill text-primary me-2"></i>Grup Üyeleri</h5>
                                 </div>
                                 <div class="card-body">
-                                    <ul class="list-group list-group-flush">
-                                        {% for member in analysis.content.grup_uyeleri %}
+                <ul class="list-group list-group-flush">
+                    {% for member in analysis.content.grup_uyeleri %}
                                             <li class="list-group-item bg-transparent">
                                                 <i class="bi bi-person-fill text-primary me-2"></i>{{ member }}
                                             </li>
-                                        {% else %}
+                    {% else %}
                                             <li class="list-group-item bg-transparent text-muted">
                                                 <i class="bi bi-info-circle me-2"></i>Bulunamadı
                                             </li>
-                                        {% endfor %}
-                                    </ul>
+                    {% endfor %}
+                </ul>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
+            </div>
+            <div class="col-md-6 mb-3">
                             <div class="card h-100 shadow-sm">
                                 <div class="card-header bg-light">
                                     <h5 class="mb-0"><i class="bi bi-check2-square text-success me-2"></i>Sorumluluklar</h5>
                                 </div>
                                 <div class="card-body">
-                                    <ul class="list-group list-group-flush">
-                                        {% for resp in analysis.content.sorumluluklar %}
+                <ul class="list-group list-group-flush">
+                    {% for resp in analysis.content.sorumluluklar %}
                                             <li class="list-group-item bg-transparent">
                                                 <i class="bi bi-check-circle-fill text-success me-2"></i>{{ resp }}
                                             </li>
-                                        {% else %}
+                    {% else %}
                                             <li class="list-group-item bg-transparent text-muted">
                                                 <i class="bi bi-info-circle me-2"></i>Bulunamadı
                                             </li>
-                                        {% endfor %}
-                                    </ul>
+                    {% endfor %}
+                </ul>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
+            </div>
+            <div class="col-md-6 mb-3">
                             <div class="card h-100 shadow-sm">
                                 <div class="card-header bg-light">
                                     <h5 class="mb-0"><i class="bi bi-bar-chart-line text-info me-2"></i>Diyagramlar</h5>
                                 </div>
                                 <div class="card-body">
-                                    <ul class="list-group list-group-flush">
-                                        {% for diag in analysis.content.diyagramlar %}
+                <ul class="list-group list-group-flush">
+                    {% for diag in analysis.content.diyagramlar %}
                                             <li class="list-group-item bg-transparent">
                                                 <i class="bi bi-diagram-3 text-info me-2"></i>{{ diag }}
                                             </li>
-                                        {% else %}
+                    {% else %}
                                             <li class="list-group-item bg-transparent text-muted">
                                                 <i class="bi bi-info-circle me-2"></i>Bulunamadı
                                             </li>
-                                        {% endfor %}
-                                    </ul>
+                    {% endfor %}
+                </ul>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
+            </div>
+            <div class="col-md-6 mb-3">
                             <div class="card h-100 shadow-sm">
                                 <div class="card-header bg-light">
                                     <h5 class="mb-0"><i class="bi bi-bookmark-star text-warning me-2"></i>Başlıklar</h5>
                                 </div>
                                 <div class="card-body">
-                                    <ul class="list-group list-group-flush">
-                                        {% for title in analysis.content.basliklar %}
+                <ul class="list-group list-group-flush">
+                    {% for title in analysis.content.basliklar %}
                                             <li class="list-group-item bg-transparent">
                                                 <i class="bi bi-tag-fill text-warning me-2"></i>{{ title }}
                                             </li>
-                                        {% else %}
+                    {% else %}
                                             <li class="list-group-item bg-transparent text-muted">
                                                 <i class="bi bi-info-circle me-2"></i>Bulunamadı
                                             </li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
+                    {% endfor %}
+                </ul>
+            </div>
                             </div>
                         </div>
                         <div class="col-12 mb-3">
@@ -315,34 +315,34 @@
                                     <h5 class="mb-0"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Eksikler</h5>
                                 </div>
                                 <div class="card-body">
-                                    <ul class="list-group list-group-flush">
-                                        {% for miss in analysis.content.eksikler %}
+                <ul class="list-group list-group-flush">
+                    {% for miss in analysis.content.eksikler %}
                                             <li class="list-group-item bg-transparent">
                                                 <i class="bi bi-x-circle-fill text-danger me-2"></i>{{ miss }}
                                             </li>
-                                        {% else %}
+                    {% else %}
                                             <li class="list-group-item bg-transparent text-success">
                                                 <i class="bi bi-check-circle-fill me-2"></i>Eksik bulunamadı
                                             </li>
-                                        {% endfor %}
-                                    </ul>
+                    {% endfor %}
+                </ul>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
             </div>
         </div>
     </div>
-    {% else %}
+</div>
+{% else %}
     <div class="alert alert-info d-flex align-items-center p-4" role="alert">
         <i class="bi bi-info-circle-fill fs-2 me-3"></i>
         <div>
             <h5 class="mb-1">Analiz Bekleniyor</h5>
             <p class="mb-0">Bu dosya henüz analiz edilmemiş. Öğretmenleriniz tarafından analiz edilmesini bekleyin.</p>
         </div>
-    </div>
-    {% endif %}
+</div>
+{% endif %}
 </div>
 
 {% endblock %}

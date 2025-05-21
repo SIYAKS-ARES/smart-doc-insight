@@ -131,7 +131,7 @@
 <section class="hero-section compact">
     <div class="container">
         <div class="d-flex justify-content-between align-items-center">
-            <div>
+    <div>
                 <h1 class="hero-title">{{ project.name }}</h1>
                 <div class="hero-subtitle">
                     <span class="meta-info">
@@ -143,19 +143,19 @@
                         {{ project.group_members|length }} üye
                     </span>
                 </div>
-            </div>
+    </div>
             <div>
                 <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-back btn-sm">
-                    <i class="bi bi-arrow-left"></i> Projelere Dön
-                </a>
-            </div>
+        <i class="bi bi-arrow-left"></i> Projelere Dön
+    </a>
+</div>
         </div>
     </div>
 </section>
 
 <div class="container no-top-margin">
-    <div class="row">
-        <div class="col-md-4">
+<div class="row">
+    <div class="col-md-4">
             <div class="feature-card mb-4 compact-card">
                 <h4 class="mb-3">
                     <i class="bi bi-info-circle text-primary me-2"></i>
@@ -180,7 +180,7 @@
                             {% for member in project.group_members %}
                                 <li class="list-group-item border-0 ps-0 py-1">
                                     <i class="bi bi-person-fill text-primary me-2"></i>
-                                    <strong>{{ member.name }}</strong>
+                                        <strong>{{ member.name }}</strong>
                                     <div class="text-muted small ps-4">{{ member.responsibility }}</div>
                                 </li>
                             {% endfor %}
@@ -188,11 +188,11 @@
                     {% else %}
                         <p class="text-muted">Grup üyesi eklenmedi</p>
                     {% endif %}
-                </div>
             </div>
         </div>
-        
-        <div class="col-md-8">
+    </div>
+    
+    <div class="col-md-8">
             <div class="feature-card compact-card">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4 class="mb-0">
@@ -202,7 +202,7 @@
                     <span class="status-badge status-analyzed">
                         <i class="bi bi-file-earmark-pdf"></i> {{ project.files|length }} Dosya
                     </span>
-                </div>
+            </div>
                 
                 {% if project.files|length > 0 %}
                     <div class="list-group">
@@ -212,41 +212,41 @@
                                     <div class="col-md-6">
                                         <div class="file-info">
                                             <i class="bi bi-file-earmark-pdf file-icon"></i>
-                                            <div>
+                                <div>
                                                 <h5 class="mb-0 fs-6">{{ file.filename }}</h5>
                                                 <p class="mb-0 text-muted small">
                                                     <i class="bi bi-calendar2"></i> {{ file.upload_date.strftime('%d.%m.%Y') }}
                                                 </p>
                                             </div>
                                         </div>
-                                    </div>
+                                </div>
                                     
                                     <div class="col-md-6 text-md-end mt-2 mt-md-0">
                                         <div class="mb-2">
-                                            {% if project.is_file_analyzed(loop.index0) %}
+                                    {% if project.is_file_analyzed(loop.index0) %}
                                                 <span class="status-badge status-analyzed">
                                                     <i class="bi bi-check-circle-fill"></i> Analiz Edildi
                                                 </span>
-                                            {% else %}
+                                    {% else %}
                                                 <span class="status-badge status-pending">
                                                     <i class="bi bi-hourglass-split"></i> Analiz Bekliyor
                                                 </span>
-                                            {% endif %}
+                                    {% endif %}
                                         </div>
                                         
                                         <div class="file-actions">
                                             <a href="{{ url_for('teacher.view_file', project_id=project._id, file_index=loop.index0) }}" class="btn btn-action btn-view btn-sm">
                                                 <i class="bi bi-eye"></i> Görüntüle
-                                            </a>
-                                            
+                                    </a>
+                                    
                                             <form action="{{ url_for('teacher.delete_file', project_id=project._id, file_index=loop.index0) }}" 
                                                 method="POST" 
                                                 class="d-inline" 
                                                 onsubmit="return confirm('Bu dosyayı silmek istediğinize emin misiniz?');">
                                                 <button type="submit" class="btn btn-action btn-delete btn-sm">
-                                                    <i class="bi bi-trash"></i> Sil
-                                                </button>
-                                            </form>
+                                            <i class="bi bi-trash"></i> Sil
+                                        </button>
+                                    </form>
                                         </div>
                                     </div>
                                 </div>

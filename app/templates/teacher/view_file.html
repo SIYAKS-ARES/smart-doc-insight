@@ -658,6 +658,226 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('reanalyzeForm').submit();
         }
     };
+    
+    // Özel başlıklarla analiz için
+    const analyzeWithHeadingsBtn = document.getElementById('analyzeWithHeadingsBtn');
+    if (analyzeWithHeadingsBtn) {
+        analyzeWithHeadingsBtn.addEventListener('click', function() {
+            // Formu doğrula
+            const form = document.getElementById('customHeadingsForm');
+            
+            // Bootstrap form doğrulama
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+                form.classList.add('was-validated');
+                return;
+            }
+            
+            // LLM sağlayıcı bilgilerini al
+            const provider = "{{ g.active_llm_provider }}";
+            let providerName = "";
+            let modelName = "";
+            
+            // Sağlayıcı adını belirle
+            switch(provider) {
+                case 'ollama': 
+                    providerName = "Ollama"; 
+                    modelName = "{{ models.ollama_model }}";
+                    break;
+                case 'lmstudio': 
+                    providerName = "LM Studio"; 
+                    modelName = "{{ models.lmstudio_model }}";
+                    break;
+                case 'openai': 
+                    providerName = "OpenAI GPT"; 
+                    modelName = "{{ models.openai_model }}";
+                    break;
+                case 'gemini': 
+                    providerName = "Google Gemini"; 
+                    modelName = "{{ models.gemini_model }}";
+                    break;
+                case 'claude': 
+                    providerName = "Anthropic Claude"; 
+                    modelName = "{{ models.claude_model }}";
+                    break;
+                default: 
+                    providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
+                    modelName = "belirlenmemiş model";
+            }
+            
+            // Analiz işlemi başladı bildirimi oluştur
+            const analyzeMessage = `<div>
+                <h6 class="mb-1 fw-bold">${providerName} sistemi ile özel başlıklarla analiz başlatıldı</h6>
+                <p class="mb-0 small">'${modelName}' modeli kullanılarak analiz yapılıyor...</p>
+            </div>`;
+            
+            // Global bildirim sistemini kullan
+            if (typeof showNotification === 'function') {
+                showNotification(analyzeMessage, 'info', 'Analiz Başlatıldı');
+            } else {
+                // Yedek olarak eski bildirim sistemini kullan
+                const notification = document.createElement('div');
+                notification.className = 'analysis-progress-notification';
+                notification.id = 'analysisProgressNotification';
+                notification.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm text-primary me-3" role="status"></div>
+                        <div>
+                            <h6 class="mb-1 fw-bold">${providerName} sistemi ile özel başlıklarla analiz başlatıldı</h6>
+                            <p class="mb-0 small">'${modelName}' modeli kullanılarak analiz yapılıyor...</p>
+                        </div>
+                    </div>
+                `;
+                
+                // Bildirimi sayfaya ekle
+                document.body.appendChild(notification);
+            }
+            
+            // Buton metnini değiştir ve devre dışı bırak
+            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Analiz Ediliyor...';
+            this.disabled = true;
+            
+            // Modal'ı kapat
+            const modal = bootstrap.Modal.getInstance(document.getElementById('customHeadingsModal'));
+            if (modal) {
+                modal.hide();
+            }
+            
+            // Formu gönder
+            form.submit();
+        });
+    }
+    
+    // Özel başlık modalı için işlevler
+    // Başlık template'i
+    function createHeadingItem() {
+        const headingItem = document.createElement('div');
+        headingItem.className = 'heading-item mb-3 border rounded p-3';
+        headingItem.innerHTML = `
+            <div class="row g-2">
+                <div class="col-md-12">
+                    <label class="form-label">Başlık <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control heading-title" name="heading_title[]" required>
+                    <div class="invalid-feedback">
+                        Lütfen bir başlık girin.
+                    </div>
+                </div>
+                <div class="col-md-12 mt-2">
+                    <label class="form-label">Açıklama <small class="text-muted">(isteğe bağlı)</small></label>
+                    <textarea class="form-control heading-description" name="heading_description[]" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="text-end mt-2">
+                <button type="button" class="btn btn-sm btn-outline-danger remove-heading-btn">
+                    <i class="bi bi-trash"></i> Kaldır
+                </button>
+            </div>
+        `;
+        
+        // Kaldır butonuna tıklama olayı ekle
+        const removeBtn = headingItem.querySelector('.remove-heading-btn');
+        removeBtn.addEventListener('click', function() {
+            headingItem.remove();
+            updateRemoveButtons();
+        });
+        
+        return headingItem;
+    }
+    
+    // Kaldır butonlarını güncelle (en az bir başlık olmalı)
+    function updateRemoveButtons() {
+        const headingItems = document.querySelectorAll('.heading-item');
+        const removeButtons = document.querySelectorAll('.remove-heading-btn');
+        
+        if (headingItems.length === 1) {
+            removeButtons[0].style.display = 'none';
+        } else {
+            removeButtons.forEach(btn => {
+                btn.style.display = 'inline-block';
+            });
+        }
+    }
+    
+    // Yeni başlık ekle butonu
+    const addHeadingBtn = document.getElementById('addHeadingBtn');
+    if (addHeadingBtn) {
+        addHeadingBtn.addEventListener('click', function() {
+            const headingsContainer = document.getElementById('headingsContainer');
+            const newHeadingItem = createHeadingItem();
+            headingsContainer.appendChild(newHeadingItem);
+            updateRemoveButtons();
+        });
+    }
+    
+    // Formu temizle butonu
+    const resetFormBtn = document.getElementById('resetFormBtn');
+    if (resetFormBtn) {
+        resetFormBtn.addEventListener('click', function() {
+            const headingsContainer = document.getElementById('headingsContainer');
+            // Tüm başlıkları temizle
+            headingsContainer.innerHTML = '';
+            // Varsayılan bir başlık ekle
+            headingsContainer.appendChild(createHeadingItem());
+            updateRemoveButtons();
+        });
+    }
+    
+    // Varsayılan başlıkları kullan butonu
+    const useDefaultHeadingsBtn = document.getElementById('useDefaultHeadingsBtn');
+    if (useDefaultHeadingsBtn) {
+        useDefaultHeadingsBtn.addEventListener('click', function() {
+            const headingsContainer = document.getElementById('headingsContainer');
+            // Tüm başlıkları temizle
+            headingsContainer.innerHTML = '';
+            
+            // Varsayılan başlıklar
+            const defaultHeadings = [
+                { title: 'Grup Üyeleri', description: 'Projede yer alan öğrencilerin isimleri ve numaraları' },
+                { title: 'Sorumluluklar', description: 'Grup üyelerinin proje içindeki sorumluluk dağılımı' },
+                { title: 'Diyagramlar', description: 'Kullanılan diyagramlar, görsel açıklamalar' },
+                { title: 'Başlıklar', description: 'Dökümanda kullanılan ana bölüm başlıkları' },
+                { title: 'Eksikler', description: 'Projede tespit edilen eksiklikler veya iyileştirme alanları' }
+            ];
+            
+            // Varsayılan başlıkları ekle
+            defaultHeadings.forEach(heading => {
+                const headingItem = createHeadingItem();
+                const titleInput = headingItem.querySelector('.heading-title');
+                const descInput = headingItem.querySelector('.heading-description');
+                
+                titleInput.value = heading.title;
+                descInput.value = heading.description;
+                
+                headingsContainer.appendChild(headingItem);
+            });
+            
+            updateRemoveButtons();
+        });
+    }
+    
+    // İlk başlık için kaldır butonunu gizle
+    updateRemoveButtons();
+    
+    // Mevcut kaldır butonlarına event listener ekle
+    document.querySelectorAll('.remove-heading-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.closest('.heading-item').remove();
+            updateRemoveButtons();
+        });
+    });
+    
+    // Kaydet butonu (özel başlıkları kaydet ama analiz etme)
+    const saveHeadingsBtn = document.getElementById('saveHeadingsBtn');
+    if (saveHeadingsBtn) {
+        saveHeadingsBtn.addEventListener('click', function() {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('customHeadingsModal'));
+            if (modal) {
+                modal.hide();
+            }
+            alert('Başlıklar kaydedildi. Analiz etmek için "Analiz Et" butonuna tıklayın.');
+        });
+    }
 });
 </script>
 {% endblock %} 

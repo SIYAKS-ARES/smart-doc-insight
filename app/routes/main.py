@@ -3,6 +3,7 @@ from flask_login import current_user
 from app.utils.llm_utils import check_ollama_availability, check_lmstudio_availability
 import os
 
+
 main = Blueprint('main', __name__)
 
 @main.route('/')

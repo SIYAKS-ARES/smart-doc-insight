@@ -417,23 +417,23 @@ def parse_llm_results(results, categories=None):
                     current_category = category
                     print(f"Kategori değişti: {current_category}")
                     break
+        
+        # Eğer bir kategori belirlediyse
+        if current_category and current_category in analysis_categories:
+            # Madde işaretleri veya numaralandırma varsa temizle
+            if line.startswith('-') or line.startswith('•') or line.startswith('*'):
+                line = line[1:].strip()
+            elif len(line) > 1 and line[0].isdigit() and line[1:].startswith('. '):
+                line = line[line.find('.')+1:].strip()
             
-            # Eğer bir kategori belirlediyse
-            if current_category and current_category in analysis_categories:
-                # Madde işaretleri veya numaralandırma varsa temizle
-                if line.startswith('-') or line.startswith('•') or line.startswith('*'):
+            # Satır boş değilse ve anlamlı bir içerik varsa ekle
+            if line and len(line) > 2:  # En az 3 karakter
+                # Ekstra madde işaretlerini temizle
+                while line.startswith('-') or line.startswith('•') or line.startswith('*'):
                     line = line[1:].strip()
-                elif len(line) > 1 and line[0].isdigit() and line[1:].startswith('. '):
-                    line = line[line.find('.')+1:].strip()
                 
-                # Satır boş değilse ve anlamlı bir içerik varsa ekle
-                if line and len(line) > 2:  # En az 3 karakter
-                    # Ekstra madde işaretlerini temizle
-                    while line.startswith('-') or line.startswith('•') or line.startswith('*'):
-                        line = line[1:].strip()
-                    
-                    analysis[current_category].append(line)
-                    print(f"Eklendi: {current_category} <- '{line}'")
+                analysis[current_category].append(line)
+                print(f"Eklendi: {current_category} <- '{line}'")
         
         # Direkt eşleşenler varsa onları da ekle
         for category, pattern_list in patterns.items():

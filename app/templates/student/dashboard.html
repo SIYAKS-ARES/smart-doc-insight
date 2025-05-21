@@ -40,15 +40,15 @@
             </div>
             <div>
                 <a href="{{ url_for('student.new_project') }}" class="btn btn-primary btn-sm">
-                    <i class="bi bi-plus-circle"></i> Yeni Proje
-                </a>
-            </div>
+        <i class="bi bi-plus-circle"></i> Yeni Proje
+    </a>
+</div>
         </div>
     </div>
 </section>
 
 <div class="container">
-    {% if projects|length > 0 %}
+{% if projects|length > 0 %}
         <div class="row">
             <div class="col-12">
                 <h2 class="fw-bold section-heading d-flex justify-content-between align-items-center">
@@ -58,9 +58,9 @@
             </div>
         </div>
 
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-            {% for project in projects %}
-                <div class="col">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for project in projects %}
+            <div class="col">
                     <div class="feature-card h-100 compact-card">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <h4 class="mb-1">{{ project.name }}</h4>
@@ -92,12 +92,12 @@
                             <a href="{{ url_for('student.edit_project', project_id=project._id) }}" class="btn btn-outline-secondary btn-sm">
                                 <i class="bi bi-pencil"></i> Düzenle
                             </a>
-                        </div>
                     </div>
                 </div>
-            {% endfor %}
-        </div>
-    {% else %}
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
         <div class="row mt-3">
             <div class="col">
                 <div class="feature-card text-center py-4 compact-card">
@@ -109,12 +109,12 @@
                         İlk projenizi oluşturarak Smart Doc Insight'ı keşfetmeye başlayın.
                     </p>
                     <a href="{{ url_for('student.new_project') }}" class="btn btn-primary btn-sm">
-                        <i class="bi bi-plus-circle"></i> Yeni Proje Oluştur
-                    </a>
+                <i class="bi bi-plus-circle"></i> Yeni Proje Oluştur
+            </a>
                 </div>
-            </div>
         </div>
-    {% endif %}
+    </div>
+{% endif %}
 </div>
 {% endblock %}
 
