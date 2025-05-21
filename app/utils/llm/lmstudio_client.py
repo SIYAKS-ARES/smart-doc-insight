@@ -3,7 +3,7 @@ from typing import Dict, Generator, Any, Optional
 class LMStudioClient:
     """LM Studio LLM sağlayıcısı ile etkileşim için istemci"""
     
-    def __init__(self, model_name: str = "deepseek-coder-v2-lite-instruct-mlx"):
+    def __init__(self, model_name: str = "mistral-nemo-instruct-2407"):
         """
         LM Studio istemcisini başlatır
         

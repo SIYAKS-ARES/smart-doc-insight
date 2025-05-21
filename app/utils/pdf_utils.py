@@ -2,6 +2,7 @@ import os
 import pdfplumber
 from werkzeug.utils import secure_filename
 from flask import current_app
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 ALLOWED_EXTENSIONS = {'pdf'}
 
@@ -32,10 +33,72 @@ def extract_text_from_pdf(pdf_path):
     
     return text
 
-def chunk_text(text, max_chunk_size=1000):
+def chunk_text(text, max_chunk_size=7500, chunk_overlap=100):
     """
-    Metni daha küçük parçalara böler
-    LLM token limiti için parçalama
+    Metni daha küçük parçalara böler (RecursiveCharacterTextSplitter kullanarak)
+    
+    Args:
+        text: Bölünecek metin
+        max_chunk_size: Maksimum chunk boyutu
+        chunk_overlap: Chunk'lar arasındaki örtüşme miktarı
+        
+    Returns:
+        Metin parçaları listesi
+    """
+    try:
+        # Önemli başlık kalıplarını koru (başlık metin bölünmelerini engelle)
+        başlık_kalıpları = [
+            "GRUP ÜYELERİ", "PROJE EKİBİ", "TAKIM ÜYELERİ", "ÖĞRENCİLER",
+            "SORUMLULUKLAR", "GÖREVLER", "İŞ BÖLÜMÜ", 
+            "BAŞLIKLAR", "İÇİNDEKİLER", "BÖLÜMLER",
+            "GİRİŞ", "ÖZET", "ÖNSÖZ", "ABSTRACT", "AMAÇ", "HEDEF",
+            "YÖNTEM", "METOD", "METHODOLGY",
+            "ARAŞTIRMA", "İNCELEME", "ANALİZ",
+            "BULGULAR", "SONUÇLAR", "TARTIŞMA", "ÇIKARIMLAR",
+            "EKSİKLER", "KISITLAR", "SINIRLILIKLAR",
+            "KAYNAKÇA", "REFERANSLAR", "KAYNAKLAR"
+        ]
+        
+        # RecursiveCharacterTextSplitter kullan
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=max_chunk_size,
+            chunk_overlap=chunk_overlap,
+            separators=["\n\n", "\n", ". ", ": ", ", ", " ", ""],  # Daha hassas ayırıcılar
+            keep_separator=True,  # Ayırıcıları koru
+            is_separator_regex=False
+        )
+        
+        # Özel bölümleme stratejisi: Başlıkları korumak için metni ön işle
+        processed_text = text
+        
+        # Başlıkları koruyarak metni parçalara böl
+        chunks = text_splitter.split_text(processed_text)
+        
+        # Özel başlık kontrolü: Parçaların başında/sonunda başlık kalıpları varsa uygun şekilde ayarla
+        enhanced_chunks = []
+        for i, chunk in enumerate(chunks):
+            # Parçanın başında veya sonunda eksik kalan başlık kontrolü
+            chunk_clean = chunk.strip()
+            
+            # Chunk'ı ekle
+            if chunk_clean:
+                enhanced_chunks.append(chunk_clean)
+        
+        # Boş chunk'ları filtrele ve minimum chunk boyutunu kontrol et
+        min_chunk_size = 50  # Minimum anlamlı chunk boyutu
+        final_chunks = [chunk for chunk in enhanced_chunks if len(chunk.strip()) > min_chunk_size]
+        
+        print(f"{len(final_chunks)} parça oluşturuldu (RecursiveCharacterTextSplitter)")
+        return final_chunks
+    except Exception as e:
+        print(f"Metin bölümleme hatası: {e}")
+        # Hata durumunda eski yönteme geri dön
+        return _legacy_chunk_text(text, max_chunk_size)
+
+def _legacy_chunk_text(text, max_chunk_size=1000):
+    """
+    Eski metin bölümleme yöntemi, 
+    RecursiveCharacterTextSplitter başarısız olursa yedek olarak kullanılır
     """
     chunks = []
     current_chunk = ""

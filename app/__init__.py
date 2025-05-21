@@ -46,7 +46,7 @@ def create_app(config=None):
     app.config['UPLOAD_FOLDER'] = os.getenv('UPLOAD_FOLDER', 'uploads')
     app.config['OLLAMA_BASE_URL'] = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')
     app.config['LLM_PROVIDER'] = os.getenv('LLM_PROVIDER', 'ollama')
-    app.config['LLM_STUDIO_MODEL'] = os.getenv('LLM_STUDIO_MODEL', 'deepseek-coder-v2-lite-instruct-mlx')
+    app.config['LLM_STUDIO_MODEL'] = os.getenv('LLM_STUDIO_MODEL', 'mistral-nemo-instruct-2407')
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB maksimum dosya boyutu
 
     # CORS yapılandırması

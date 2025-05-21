@@ -48,8 +48,20 @@ def get_llm_client(force_provider=None, api_key=None, user_id=None):
                 port=int(os.getenv("OLLAMA_PORT", 11434))
             )
         elif provider == "lmstudio":
-            model_name = os.getenv("LM_STUDIO_MODEL", "deepseek-coder-v2-lite-instruct-mlx")
-            return LMStudioClient(model_name=model_name)
+            # LM Studio istemcisini oluştur
+            from .lmstudio_client import LMStudioClient
+            
+            # Varsayılan model adını ayarla
+            model_name = os.getenv("LM_STUDIO_MODEL", "mistral-nemo-instruct-2407")
+            
+            # İstemciyi başlat
+            try:
+                client = LMStudioClient(model_name=model_name)
+                print(f"LM Studio istemcisi başlatıldı, model: {model_name}")
+                return client
+            except Exception as e:
+                print(f"LM Studio istemci hatası: {str(e)}")
+                raise
         
         # API tabanlı LLM sağlayıcıları
         elif provider == "openai":
@@ -114,7 +126,7 @@ def get_llm_client(force_provider=None, api_key=None, user_id=None):
                             port=int(os.getenv("OLLAMA_PORT", 11434))
                         )
                     elif alt_provider == "lmstudio":
-                        model_name = os.getenv("LM_STUDIO_MODEL", "deepseek-coder-v2-lite-instruct-mlx")
+                        model_name = os.getenv("LM_STUDIO_MODEL", "mistral-nemo-instruct-2407")
                         return LMStudioClient(model_name=model_name)
                     
                 except Exception as alt_error:

@@ -86,7 +86,7 @@ def view_file(project_id, file_index):
     # Model bilgilerini al
     models = {
         'ollama_model': os.getenv('OLLAMA_MODEL', 'mistral:latest'),
-        'lmstudio_model': os.getenv('LM_STUDIO_MODEL', 'deepseek-coder-v2-lite-instruct-mlx'),
+        'lmstudio_model': os.getenv('LM_STUDIO_MODEL', 'mistral-nemo-instruct-2407'),
         'openai_model': APIKeyManager.get_model('openai') or os.getenv('OPENAI_MODEL', 'gpt-3.5-turbo'),
         'gemini_model': APIKeyManager.get_model('gemini') or os.getenv('GEMINI_MODEL', 'gemini-2.0-flash'),
         'claude_model': APIKeyManager.get_model('claude') or os.getenv('CLAUDE_MODEL', 'claude-3-opus-20240229')
@@ -134,7 +134,7 @@ def analyze_file(project_id, file_index):
         if not check_lmstudio_availability():
             flash('LM Studio servisi şu anda çalışmıyor. Lütfen LM Studio uygulamasının çalıştığından ve API Server özelliğinin etkin olduğundan emin olun.', 'danger')
             return redirect(url_for('teacher.view_file', project_id=project_id, file_index=file_index))
-        model_name = os.getenv('LM_STUDIO_MODEL', 'deepseek-coder-v2-lite-instruct-mlx')
+        model_name = os.getenv('LM_STUDIO_MODEL', 'mistral-nemo-instruct-2407')
     elif llm_provider == 'openai':
         # OpenAI için model ve API anahtarı kontrolü
         from app.utils.api_key_manager import APIKeyManager
@@ -180,15 +180,81 @@ def analyze_file(project_id, file_index):
         return redirect(url_for('teacher.view_file', project_id=project_id, file_index=file_index))
     
     # Metni parçalara böl (LLM token limiti için)
-    text_chunks = chunk_text(pdf_text)
+    text_chunks = chunk_text(pdf_text, chunk_overlap=250)  # Daha fazla örtüşme sağla
+    
+    # Önemli metinleri ve belirli kısımları ayıklamak için içeriği ön-analiz et
+    try:
+        # İlk chunk'ı kullanarak hızlı bir içindekiler/başlık analizi yap (eğer 1'den fazla chunk varsa)
+        important_sections = []
+        if len(text_chunks) > 1:
+            first_chunk = text_chunks[0]
+            
+            # İçindekiler/başlıklar/önemli bölümler için bakın (ilk chunk'ta genellikle bulunur)
+            section_indicators = ["içindekiler", "başlıklar", "özet", "giriş", "amaç", "içerik", "konu", "bölümler"]
+            
+            for indicator in section_indicators:
+                if indicator.lower() in first_chunk.lower():
+                    # İpucunu kaydet
+                    important_sections.append(f"Dokümanda '{indicator}' bölümü olabilir.")
+            
+            # Debug log
+            with open('/tmp/llm_debug/info.txt', 'a', encoding='utf-8') as f:
+                f.write(f"Ön analiz sonucu tespit edilen önemli bölümler: {important_sections}\n")
+    except Exception as e:
+        print(f"Ön analiz hatası: {e}")
+        important_sections = []
+    
+    # Varsayılan analiz kategorilerini oluştur
+    custom_categories = {
+        "grup_uyeleri": "Grup üyeleri kimler?",
+        "sorumluluklar": "Kim hangi bölümden sorumlu?",
+        "diyagramlar": "Diyagramları kim çizmiş?",
+        "basliklar": "Belirgin başlıklar neler?",
+        "eksikler": "İçerikte eksik görünen bir şey var mı?"
+    }
+    
+    # Özel prompt oluştur (standart analiz için)
+    custom_prompt = """Bu PDF bir öğrenci projesidir. İçeriği detaylı bir şekilde analiz et ve şu bilgileri çıkar:
+    • Grup üyeleri kimler?
+    • Kim hangi bölümden sorumlu?
+    • Diyagramları kim çizmiş?
+    • Belirgin başlıklar neler?
+    • İçerikte eksik görünen bir şey var mı?
+    
+    İşte PDF'in içeriği:
+    
+    {content}
+    
+    Yanıtını aşağıdaki şekilde yapılandır:
+    1. Her başlık için yanıtı ayrı bir bölüm olarak ver.
+    2. Her bölümü başlık adıyla başlat (örn: "Grup üyeleri:").
+    3. Bilgi bulunamazsa SADECE "Bu konuda bilgi bulunamadı" yaz.
+    4. Yanıtını maddeler halinde ver, her maddeyi • işaretiyle başlat.
+    5. Kesinlikle başlıkların dışına çıkma ve başlık tekrarı yapma.
+    6. Başlıkları tam olarak verilen metinle kullan.
+    7. Analiz yaparken öğrenci projelerinde olması gereken resmi format ve standartlara göre değerlendir.
+    8. Grup üyelerini tam isim-soyisim olarak çıkarmaya özen göster.
+    9. Diyagram çizenler belirtilmişse tam isimleriyle yaz.
+    10. Başlıkları belirgin şekilde ayrıştır ve maddelendir.
+    11. Eksik kısımları net olarak belirt (diyagramlar, akış şemaları, içindekiler tablosu, sonuç, vb.).
+    """
+    
+    # Varsa ön analiz ipuçlarını ekle
+    if important_sections:
+        custom_prompt += "\n\nİpuçları: Dokümanda şu bölümler tespit edildi:\n"
+        for section in important_sections:
+            custom_prompt += f"    • {section}\n"
+    
+    # Debug log
+    with open('/tmp/llm_debug/info.txt', 'a', encoding='utf-8') as f:
+        f.write(f"Oluşturulan geliştirilmiş prompt: {custom_prompt}\n")
     
     # LLM bilgisini kullanıcıya göster
     flash(f'{provider_display_name} sistemi ile "{model_name}" modeli kullanılarak analiz yapılıyor...', 'info')
     
     try:
-        # Varsayılan analiz için DEFAULT_ANALYSIS_CATEGORIES ve DEFAULT_PROMPT_TEMPLATE kullanılır
-        # analyze_text_with_llm fonksiyonu parametresiz çağrıldığında varsayılan başlıkları kullanır
-        analysis_result = analyze_text_with_llm(text_chunks)
+        # LLM ile analiz yap (özel kategoriler ve özel prompt ile)
+        analysis_result = analyze_text_with_llm(text_chunks, categories=custom_categories, custom_prompt=custom_prompt)
         
         # Analiz sonucuna LLM sağlayıcı ve model bilgilerini ekle
         analysis_result['llm_info'] = {
@@ -379,7 +445,7 @@ def test_llm():
         
         # Model adını belirle
         if provider == 'lmstudio':
-            model_name = os.getenv('LM_STUDIO_MODEL', 'deepseek-coder-v2-lite-instruct-mlx')
+            model_name = os.getenv('LM_STUDIO_MODEL', 'mistral-nemo-instruct-2407')
         else:
             model_name = os.getenv('OLLAMA_MODEL', 'mistral:latest')
             
@@ -895,7 +961,7 @@ def analyze_file_with_custom_headings(project_id, file_index):
         if not check_lmstudio_availability():
             flash('LM Studio servisi şu anda çalışmıyor. Lütfen LM Studio uygulamasının çalıştığından ve API Server özelliğinin etkin olduğundan emin olun.', 'danger')
             return redirect(url_for('teacher.view_file', project_id=project_id, file_index=file_index))
-        model_name = os.getenv('LM_STUDIO_MODEL', 'deepseek-coder-v2-lite-instruct-mlx')
+        model_name = os.getenv('LM_STUDIO_MODEL', 'mistral-nemo-instruct-2407')
     elif llm_provider == 'openai':
         # OpenAI için model ve API anahtarı kontrolü
         from app.utils.api_key_manager import APIKeyManager
@@ -941,10 +1007,34 @@ def analyze_file_with_custom_headings(project_id, file_index):
         return redirect(url_for('teacher.view_file', project_id=project_id, file_index=file_index))
     
     # Metni parçalara böl (LLM token limiti için)
-    text_chunks = chunk_text(pdf_text)
+    text_chunks = chunk_text(pdf_text, chunk_overlap=250)  # Daha fazla örtüşme sağla
     
-    # Özel başlıklarla dinamik prompt oluştur
-    custom_prompt = "Bu PDF bir öğrenci projesidir. İçeriği analiz et ve şu başlıkların dökümanda olup olmadığını kontrol et:\n"
+    # Önemli metinleri ve belirli kısımları ayıklamak için içeriği ön-analiz et
+    try:
+        # İlk chunk'ı kullanarak hızlı bir içindekiler/başlık analizi yap (eğer 1'den fazla chunk varsa)
+        important_sections = []
+        if len(text_chunks) > 1:
+            first_chunk = text_chunks[0]
+            
+            # İçindekiler/başlıklar/önemli bölümler için bakın (ilk chunk'ta genellikle bulunur)
+            section_indicators = ["içindekiler", "başlıklar", "özet", "giriş", "amaç", "içerik", "konu", "bölümler"]
+            
+            for indicator in section_indicators:
+                if indicator.lower() in first_chunk.lower():
+                    # İpucunu kaydet
+                    important_sections.append(f"Dokümanda '{indicator}' bölümü olabilir.")
+            
+            # Debug log
+            with open('/tmp/llm_debug/info.txt', 'a', encoding='utf-8') as f:
+                f.write(f"Ön analiz sonucu tespit edilen önemli bölümler: {important_sections}\n")
+    except Exception as e:
+        print(f"Ön analiz hatası: {e}")
+        important_sections = []
+    
+    # Özel başlıklarla geliştirilmiş prompt oluştur
+    custom_prompt = "Bu PDF bir öğrenci projesidir. Aşağıdaki başlıkları dokümanda aramanı ve her başlık için içeriğin var olup olmadığını analiz etmeni istiyorum:\n\n"
+    
+    # Başlıkları ve özel talimatları ekle
     for i, title in enumerate(heading_titles):
         if title.strip():
             # Açıklamayı kontrol et
@@ -965,30 +1055,39 @@ def analyze_file_with_custom_headings(project_id, file_index):
                 
             custom_prompt += "\n"
     
+    # Varsa ön analiz ipuçlarını ekle
+    if important_sections:
+        custom_prompt += "\nİpuçları: Dokümanda şu bölümler tespit edildi:\n"
+        for section in important_sections:
+            custom_prompt += f"    • {section}\n"
+    
+    # Geliştirilmiş formatla prompt tamamla
     custom_prompt += """    
     İşte PDF'in içeriği:
     
     {content}
     
     Yanıtını aşağıdaki şekilde yapılandır:
-    1. Her başlık için şu formatta yanıt ver:
-       - Eğer başlıkla ilgili içerik varsa: "Evet, dökümanda bu başlığa yer verilmiştir." ifadesiyle başla ve 1-3 cümlelik kısa bir özet sun.
-       - Eğer başlıkla ilgili içerik yoksa: "Bu başlıkla ilgili veri bulunamadı" ifadesini kullan.
-    2. Her bölümü başlık adıyla AYNEN başlat ve başlık sonuna ":" ekle (örneğin "Proje Özeti:" şeklinde).
-    3. Yanıtlarını kısa ve öz tut, uzun açıklamalardan kaçın.
-    4. Her başlığı yeni bir satırda başlat.
-    5. Özet bilgilerini maddeler halinde değil, düz metin olarak 1-3 cümle ile sınırla.
-    6. Başlık ile yanıt arasına yeni satır veya boşluk ekleme.
+    1. Her başlık için KESİNLİKLE şu formatta yanıt ver:
+       - Eğer başlıkla ilgili içerik varsa: "Evet, dokümanda bu başlığa yer verilmiştir." ifadesiyle başla ve ardından bu içeriğin nerede ve nasıl ele alındığına dair kısa bir özet sun.
+       - Eğer başlıkla ilgili içerik kısmen varsa: "Bu başlık kısmen ele alınmıştır." ifadesiyle başla ve mevcut içeriği özetleyip eksik kısımları belirt.
+       - Eğer başlıkla ilgili içerik hiç yoksa: "Bu başlıkla ilgili bilgi dokümanda bulunamadı." ifadesini kullan.
+       
+    2. Her yanıtını BAŞLIK: CEVAP formatında ver. Örneğin: 
+       "Proje Özeti: Evet, dokümanda bu başlığa yer verilmiştir. 2. sayfada..."
+       
+    3. Cevapları aşağıdaki kriterlerle biçimlendir:
+       - Her başlık yanıtı için yeni bir paragraf başlat
+       - Bilgi bulunduysa, hangi sayfada/bölümde olduğunu belirt
+       - Bilgi bulunamadıysa, dokümanın hangi kısımlarında bu tür bilgi aranması gerektiğini öneri olarak ekle
+       - Yanıtını kısa ve net tut (her başlık için maksimum 3 cümle)
     
-    ÖRNEK YANIT FORMATI:
-    Proje Özeti: Evet, dökümanda bu başlığa yer verilmiştir. [Kısa özet burada yer alacak]
-    Problem Tanımı: Bu başlıkla ilgili veri bulunamadı.
-    Çözüm Önerisi: Evet, dökümanda bu başlığa yer verilmiştir. [Kısa özet burada yer alacak]
+    4. Kesinlikle her başlık için yanıt oluştur ve hiçbir başlığı atlama.
     """
     
     # Debug log
     with open('/tmp/llm_debug/info.txt', 'a', encoding='utf-8') as f:
-        f.write(f"Oluşturulan prompt: {custom_prompt}\n")
+        f.write(f"Oluşturulan geliştirilmiş prompt: {custom_prompt}\n")
     
     # LLM bilgisini kullanıcıya göster
     flash(f'{provider_display_name} sistemi ile "{model_name}" modeli kullanılarak özel başlıklarla analiz yapılıyor...', 'info')
@@ -996,10 +1095,6 @@ def analyze_file_with_custom_headings(project_id, file_index):
     try:
         # LLM ile analiz yap (özel kategoriler ve özel prompt ile)
         analysis_result = analyze_text_with_llm(text_chunks, categories=custom_categories, custom_prompt=custom_prompt)
-        
-        # Debug log
-        with open('/tmp/llm_debug/info.txt', 'a', encoding='utf-8') as f:
-            f.write(f"Analiz sonucu: {analysis_result}\n")
         
         # Analiz sonucuna LLM sağlayıcı ve model bilgilerini ekle
         analysis_result['llm_info'] = {

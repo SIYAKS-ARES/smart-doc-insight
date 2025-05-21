@@ -40,7 +40,7 @@ def system_status():
     llm_info = {
         'provider': llm_provider,
         'ollama_model': os.getenv('OLLAMA_MODEL', 'mistral:latest'),
-        'lmstudio_model': os.getenv('LLM_STUDIO_MODEL', 'deepseek-coder-v2-lite-instruct-mlx')
+        'lmstudio_model': os.getenv('LLM_STUDIO_MODEL', 'mistral-nemo-instruct-2407')
     }
     
     return render_template('system_status.html', 

@@ -19,7 +19,7 @@ DEFAULT_ANALYSIS_CATEGORIES = {
 }
 
 # Varsayılan analiz şablonu
-DEFAULT_PROMPT_TEMPLATE = """Bu PDF bir öğrenci projesidir. İçeriği analiz et ve şu bilgileri çıkar:
+DEFAULT_PROMPT_TEMPLATE = """Bu PDF bir öğrenci projesidir. İçeriği detaylı bir şekilde analiz et ve şu bilgileri çıkar:
     • Grup üyeleri kimler?
     • Kim hangi bölümden sorumlu?
     • Diyagramları kim çizmiş?
@@ -30,7 +30,13 @@ DEFAULT_PROMPT_TEMPLATE = """Bu PDF bir öğrenci projesidir. İçeriği analiz 
     
     {content}
     
-    Yanıtı madde madde ver."""
+    Yanıtı şu format ve kurallara göre ver:
+    1. Her kategori için açık ve net bilgiler ver
+    2. Her kategori için maddeler halinde yanıtla (• işareti kullan)
+    3. Eğer bilgi bulunamazsa "Bu konuda bilgi bulunamadı" yaz
+    4. Grup üyeleri için isimleri tam olarak al
+    5. Başlıkları dokümanın içindekiler kısmından veya metin içindeki belirgin alt bölümlerden al
+    6. Eksikler bölümünde sadece dokümanda olması gerekip de bulunmayan önemli kısımları belirt"""
 
 def analyze_text_with_llm(text_chunks, categories=None, custom_prompt=None):
     """
@@ -63,9 +69,20 @@ def analyze_text_with_llm(text_chunks, categories=None, custom_prompt=None):
     with open('/tmp/llm_debug/info.txt', 'a') as f:
         f.write(f"Kullanılan kategoriler: {analysis_categories}\n")
     
-    # Özel prompt yoksa kategorilere göre dinamik prompt oluştur
+    # Prompt optimizasyon: İçerik zenginliğine ve kategorilere göre prompt uyarla
     if custom_prompt is None:
-        prompt_template = "Bu PDF bir öğrenci projesidir. İçeriği analiz et ve şu bilgileri çıkar:\n"
+        # Başlık eşleştirmeleri için anahtar kelimeler tanımla
+        keywords = {
+            "grup_uyeleri": ["üye", "öğrenci", "grup", "ekip", "takım", "kişi", "isim"],
+            "sorumluluklar": ["sorumluluk", "görev", "rol", "bölüm", "iş", "vazife"],
+            "diyagramlar": ["diyagram", "şema", "çizim", "grafik", "görsel", "çizen"],
+            "basliklar": ["başlık", "bölüm", "kısım", "içindekiler", "konu", "alt başlık"],
+            "eksikler": ["eksik", "hata", "yanlış", "olmayan", "ihmal", "unutulmuş"]
+        }
+        
+        # Temel prompt oluştur
+        prompt_template = "Bu PDF bir öğrenci projesidir. İçeriği detaylı şekilde analiz et ve aşağıdaki bilgileri çıkar:\n"
+        
         # Kategorilerdeki başlıkları prompt'a ekle
         for category_key, category_question in analysis_categories.items():
             # Kategori anahtarı ve sorusu arasında ':' karakteri varsa, açıklama olarak değerlendir
@@ -90,10 +107,15 @@ def analyze_text_with_llm(text_chunks, categories=None, custom_prompt=None):
     Yanıtını aşağıdaki şekilde yapılandır:
     1. Her başlık için yanıtı ayrı bir bölüm olarak ver.
     2. Her bölümü başlık adıyla başlat (örn: "Grup üyeleri:").
-    3. Bilgi bulunamazsa "Bu konuda bilgi bulunamadı" yaz.
-    4. Yanıtını maddeler halinde ver, her maddeyi • veya - ile başlat.
+    3. Bilgi bulunamazsa SADECE "Bu konuda bilgi bulunamadı" yaz.
+    4. Yanıtını maddeler halinde ver, her maddeyi • işaretiyle başlat.
     5. Kesinlikle başlıkların dışına çıkma ve başlık tekrarı yapma.
-    6. Başlıkları tam olarak verilen metinle kullan."""
+    6. Başlıkları tam olarak verilen metinle kullan.
+    7. Analiz yaparken öğrenci projelerinde olması gereken resmi format ve standartlara göre değerlendir.
+    8. Grup üyelerini tam isim-soyisim olarak çıkarmaya özen göster.
+    9. Diyagram çizenler belirtilmişse tam isimleriyle yaz.
+    10. Başlıkları belirgin şekilde ayrıştır ve maddelendir.
+    11. Eksik kısımları net olarak belirt (diyagramlar, akış şemaları, içindekiler tablosu, sonuç, vb.)."""
     else:
         # Özel prompt varsa, prompt'a yapılandırma talimatlarını ekle
         if not "Yanıtını aşağıdaki şekilde yapılandır:" in custom_prompt:
@@ -102,10 +124,11 @@ def analyze_text_with_llm(text_chunks, categories=None, custom_prompt=None):
     Yanıtını aşağıdaki şekilde yapılandır:
     1. Her başlık için yanıtı ayrı bir bölüm olarak ver.
     2. Her bölümü başlık adıyla başlat (örn: "Grup üyeleri:").
-    3. Bilgi bulunamazsa "Bu konuda bilgi bulunamadı" yaz.
-    4. Yanıtını maddeler halinde ver, her maddeyi • veya - ile başlat.
+    3. Bilgi bulunamazsa SADECE "Bu konuda bilgi bulunamadı" yaz.
+    4. Yanıtını maddeler halinde ver, her maddeyi • işaretiyle başlat.
     5. Kesinlikle başlıkların dışına çıkma ve başlık tekrarı yapma.
-    6. Başlıkları tam olarak verilen metinle kullan."""
+    6. Başlıkları tam olarak verilen metinle kullan.
+    7. Öğrenci projelerinde olması gereken resmi format ve standartlara göre değerlendir."""
         else:
             prompt_template = custom_prompt
     
@@ -117,37 +140,62 @@ def analyze_text_with_llm(text_chunks, categories=None, custom_prompt=None):
         # LLM istemcisini al
         client = get_llm_client()
         
-        # Her parça için LLM'e istek gönder
-        for chunk in text_chunks:
-            prompt = prompt_template.format(content=chunk)
+        # Optimizasyon: PDF içeriği zenginliğine göre sorgu yaklaşımını belirle
+        # Eğer text_chunks sayısı 1 veya 2 ise, tüm içeriği birleştirebiliriz
+        if len(text_chunks) <= 2:
+            full_content = "\n\n".join(text_chunks)
             
-            # DEBUG: Log current prompt
-            with open('/tmp/llm_debug/info.txt', 'a') as f:
-                f.write(f"LLM'e gönderilen prompt (ilk 200 karakter): {prompt[:200]}...\n")
-            
-            try:
-                # LLM Provider üzerinden yanıt al
-                result = client.generate(prompt, options={"temperature": 0.7})
+            # Çok büyük olmadığından emin ol, hala çok büyükse parçala
+            if len(full_content) < 50000:  # Yaklaşık token limit güvenliği
+                # DEBUG: Log birleştirme bilgisi
+                with open('/tmp/llm_debug/info.txt', 'a') as f:
+                    f.write(f"Az sayıda chunk olduğu için tüm içerik birleştirildi: {len(full_content)} karakter\n")
+                
+                prompt = prompt_template.format(content=full_content)
+                result = client.generate(prompt, options={"temperature": 0.5})  # Daha düşük sıcaklık, daha tutarlı sonuçlar
                 results.append(result)
                 
                 # DEBUG: Log LLM response
                 with open('/tmp/llm_debug/info.txt', 'a') as f:
-                    f.write(f"LLM yanıtı (ilk 200 karakter): {result[:200]}...\n")
-                    
-            except Exception as client_error:
-                print(f"LLM istemci hatası: {str(client_error)}")
-                print(traceback.format_exc())
+                    f.write(f"Birleştirilmiş içerik için LLM yanıtı (ilk 200 karakter): {result[:200]}...\n")
+            else:
+                # Çok büyükse tek tek ilerle
+                for chunk in text_chunks:
+                    prompt = prompt_template.format(content=chunk)
+                    result = client.generate(prompt, options={"temperature": 0.5})
+                    results.append(result)
+        else:
+            # Standard: Her parça için LLM'e istek gönder
+            for chunk in text_chunks:
+                prompt = prompt_template.format(content=chunk)
                 
-                error_msg = f"LLM Hatası: {str(client_error)}"
-                print(error_msg)
-                results.append(error_msg)
-                
-                # DEBUG: Log error
+                # DEBUG: Log current prompt
                 with open('/tmp/llm_debug/info.txt', 'a') as f:
-                    f.write(f"LLM hatası: {error_msg}\n")
+                    f.write(f"LLM'e gönderilen prompt (ilk 200 karakter): {prompt[:200]}...\n")
                 
-            # API hız sınırlarını aşmamak için kısa bir bekleme
-            time.sleep(1)
+                try:
+                    # LLM Provider üzerinden yanıt al
+                    result = client.generate(prompt, options={"temperature": 0.5})  # Daha düşük sıcaklık, daha tutarlı sonuçlar
+                    results.append(result)
+                    
+                    # DEBUG: Log LLM response
+                    with open('/tmp/llm_debug/info.txt', 'a') as f:
+                        f.write(f"LLM yanıtı (ilk 200 karakter): {result[:200]}...\n")
+                        
+                except Exception as client_error:
+                    print(f"LLM istemci hatası: {str(client_error)}")
+                    print(traceback.format_exc())
+                    
+                    error_msg = f"LLM Hatası: {str(client_error)}"
+                    print(error_msg)
+                    results.append(error_msg)
+                    
+                    # DEBUG: Log error
+                    with open('/tmp/llm_debug/info.txt', 'a') as f:
+                        f.write(f"LLM hatası: {error_msg}\n")
+                    
+                # API hız sınırlarını aşmamak için kısa bir bekleme
+                time.sleep(1)
             
     except Exception as e:
         error_msg = f"Genel Hata: {str(e)}"
@@ -247,16 +295,28 @@ def parse_llm_results(results, categories=None):
         for i, (key, title) in enumerate(analysis_categories.items()):
             if key.startswith('custom_'):
                 # Başlığı temizle
-                clean_title = title.strip().rstrip(':')
+                clean_title = title.strip().rstrip(':').split('(')[0].strip()  # Parantez içindeki açıklamaları kaldır
+                
                 # Başlık anahtarı eşleştirmesi
                 category_titles[clean_title.lower()] = key
                 category_keys_by_order.append(key)
+                
+                # Debug için başlık eşleştirmelerini logla
+                with open('/tmp/llm_debug/info.txt', 'a') as f:
+                    f.write(f"Başlık eşleştirmesi: '{clean_title.lower()}' -> {key}\n")
         
         with open('/tmp/llm_debug/info.txt', 'a') as f:
             f.write(f"Aranan kategori başlıkları: {category_titles}\n")
         
         # Her satırı kontrol et
-        for line in lines:
+        current_category = None
+        current_content = []
+        has_valuable_info = {}  # Hangi kategorilerin değerli bilgi içerdiğini izle
+        
+        for key in category_keys_by_order:
+            has_valuable_info[key] = False
+        
+        for i, line in enumerate(lines):
             line = line.strip()
             if not line:
                 continue
@@ -267,57 +327,135 @@ def parse_llm_results(results, categories=None):
             
             # Başlık kontrolü
             found_category = None
-            content = None
             
             # Her kategori başlığı için kontrol et
             for title, key in category_titles.items():
+                # Madde işaretli satır kontrolü (• Başlık)
+                if line.startswith('•') and title.lower() in line.lower():
+                    if current_category and current_content:
+                        # Önceki kategoriye içeriği ekle
+                        if current_content:
+                            # İçerik değerli mi kontrol et
+                            if any("bulunamadı" not in content.lower() for content in current_content):
+                                has_valuable_info[current_category] = True
+                                # Değerli içerikler varsa, "bulunamadı" mesajlarını filtrele
+                                filtered_content = [
+                                    content for content in current_content 
+                                    if not any(not_found in content.lower() for not_found in 
+                                              ["bulunamadı", "bulunmamaktadır"])
+                                ]
+                                analysis[current_category].extend(filtered_content)
+                            else:
+                                analysis[current_category].extend(current_content)
+                            current_content = []
+                            
+                    found_category = key
+                    current_category = key
+                    # Debug logunu kaydet
+                    with open('/tmp/llm_debug/info.txt', 'a') as f:
+                        f.write(f"Başlık bulundu (madde işaretli): '{line}' -> {key}\n")
+                    break
+                    
                 # Title: Content formatını ara
-                if ':' in line:
+                elif ':' in line:
                     parts = line.split(':', 1)
                     line_title = parts[0].strip().lower()
-                    # Tam başlık eşleşmesi
-                    if line_title == title.lower():
+                    # Tam başlık eşleşmesi veya başlığın bir parçası olarak eşleşme
+                    if line_title == title.lower() or title.lower() in line_title:
+                        if current_category and current_content:
+                            # Önceki kategoriye içeriği ekle
+                            if any("bulunamadı" not in content.lower() for content in current_content):
+                                has_valuable_info[current_category] = True
+                                filtered_content = [
+                                    content for content in current_content 
+                                    if not any(not_found in content.lower() for not_found in 
+                                              ["bulunamadı", "bulunmamaktadır"])
+                                ]
+                                analysis[current_category].extend(filtered_content)
+                            else:
+                                analysis[current_category].extend(current_content)
+                            current_content = []
+                            
                         found_category = key
+                        current_category = key
                         content = parts[1].strip()
                         with open('/tmp/llm_debug/info.txt', 'a') as f:
-                            f.write(f"Başlık bulundu: '{line_title}' -> {key}\n")
+                            f.write(f"Başlık bulundu (başlık:içerik): '{line_title}' -> {key}\n")
+                            
+                        # "Bu başlıkla ilgili veri bulunamadı" kontrolü
+                        if not (any(not_found in content.lower() for not_found in ["veri bulunamadı", "bilgi bulunamadı", "bulunmamaktadır", "bulunamadı"])):
+                            current_content.append(content)
+                            # Eğer içerik değerliyse, bayrak ayarla
+                            has_valuable_info[current_category] = True
                         break
             
-            # Eğer bir kategori eşleşmesi varsa
-            if found_category and content:
-                # "Bu başlıkla ilgili veri bulunamadı" kontrolü
-                if "veri bulunamadı" in content.lower():
-                    # Bulunamadı durumunda boş liste kal
-                    with open('/tmp/llm_debug/info.txt', 'a') as f:
-                        f.write(f"Veri bulunamadı bilgisi: {found_category}\n")
-                    continue
+            # Eğer mevcut bir kategorideyiz ve bu satır başlık değilse, içerik olarak ekle
+            if current_category and not found_category:
+                # İçerik önceki satırın devamı olabilir
+                content_line = line
                 
-                # İçerik bulunduğunda ekle
-                if content.lower().startswith("evet,"):
-                    # "Evet, dökümanda..." kısmını temizle
-                    for prefix in ["evet, ", "evet,"]:
-                        if content.lower().startswith(prefix):
-                            content = content[len(prefix):].strip()
-                            break
-                
-                # İçeriği kaydet
-                if content:
-                    analysis[found_category].append(content)
+                # Madde işareti varsa temizle
+                if line.startswith('-') or line.startswith('•') or line.startswith('*'):
+                    content_line = line[1:].strip()
+                    
+                # Eğer bir "bilgi bulunamadı" içermiyorsa içeriğe ekle
+                if not any(not_found in content_line.lower() for not_found in ["veri bulunamadı", "bilgi bulunamadı", "bulunmamaktadır", "bulunamadı"]):
+                    current_content.append(content_line)
+                    has_valuable_info[current_category] = True
                     with open('/tmp/llm_debug/info.txt', 'a') as f:
-                        f.write(f"İçerik eklendi: {found_category} <- '{content}'\n")
+                        f.write(f"İçerik satırı eklendi: '{content_line}'\n")
+                # Eğer "bulunamadı" içeriyorsa ve henüz değerli içerik yoksa sakla
+                elif not has_valuable_info[current_category]:
+                    current_content.append(content_line)
+                    with open('/tmp/llm_debug/info.txt', 'a') as f:
+                        f.write(f"'Bulunamadı' içeriği eklendi (değerli içerik olmadığından): '{content_line}'\n")
         
+        # Son kategorinin içeriğini ekle
+        if current_category and current_content:
+            if any("bulunamadı" not in content.lower() for content in current_content):
+                has_valuable_info[current_category] = True
+                filtered_content = [
+                    content for content in current_content 
+                    if not any(not_found in content.lower() for not_found in 
+                             ["bulunamadı", "bulunmamaktadır"])
+                ]
+                analysis[current_category].extend(filtered_content)
+            else:
+                analysis[current_category].extend(current_content)
+        
+        # Tekrar eden içerikleri temizle
+        for key in category_keys_by_order:
+            # Eğer kategoride içerik varsa
+            if analysis[key]:
+                # Aynı içerik birden fazla kez eklenmiş olabilir
+                unique_items = []
+                seen = set()
+                
+                for item in analysis[key]:
+                    # İçeriğin normalize edilmiş hali
+                    normalized_item = ' '.join(item.lower().split())
+                    
+                    if normalized_item not in seen:
+                        seen.add(normalized_item)
+                        unique_items.append(item)
+                
+                analysis[key] = unique_items
+            
+        # LLM'in yanıtını direkt olarak da ekle - hiçbir şey bulunamama durumunda kullanılabilir
+        analysis["raw_llm_output"] = results
+            
         # Her kategori için ayrı debug bilgisi
         for key in category_keys_by_order:
             with open('/tmp/llm_debug/info.txt', 'a') as f:
                 f.write(f"Sonuç kategorisi: {key} -> {analysis[key]}\n")
     else:
-        # Standart analiz için mevcut kod bloğunu kullan
+        # Standart analiz için ayrı ayrıştırma kodu
         # Özel durumlar için keyword tabanlı kontroller
         
         # Diyagram eksikliği kontrol et
         diyagram_eksik = False
         diyagram_keywords = ["diyagram yok", "diyagram bulunmamaktadır", "diyagram gösterilmemiş", 
-                            "diyagramlar yok", "diyagram yer almadı", "bilgi yok"]
+                            "diyagramlar yok", "diyagram yer almadı", "bilgi yok", "bulunamadı"]
         
         for keyword in diyagram_keywords:
             if keyword in results.lower():
@@ -389,15 +527,21 @@ def parse_llm_results(results, categories=None):
         # Satır bazlı analiz
         lines = results.split('\n')
         current_category = None
+        current_content = []
         
         # Kategoriler ve anahtar kelimelerin eşleşmeleri
         category_keywords = {
             "grup_uyeleri": ["grup üyeleri", "öğrenci", "öğrenciler", "üye", "grup", "ekip"],
             "sorumluluklar": ["sorumlu", "sorumluluk", "görev", "bölüm sorumlu"],
             "diyagramlar": ["diyagram", "çizim", "çizen", "şema"],
-            "basliklar": ["başlık", "konu", "bölüm"],
+            "basliklar": ["başlık", "konu", "bölüm", "içindekiler"],
             "eksikler": ["eksik", "bulunmayan", "yetersiz", "yok"]
         }
+        
+        # Hangi kategorilerin değerli bilgi içerdiğini izle
+        has_valuable_info = {}
+        for key in analysis_categories.keys():
+            has_valuable_info[key] = False
         
         for line in lines:
             line = line.strip()
@@ -408,32 +552,164 @@ def parse_llm_results(results, categories=None):
             # Debug için her satırı yazdır
             print(f"İşlenen satır: '{line}'")
             
-            # Kategori başlıklarını tespit et
-            lower_line = line.lower()
+            # Aktif kategoriyi güncelle - başlık algılama
+            found_category = None
             
-            # Aktif kategoriyi güncelle
-            for category, keywords in category_keywords.items():
-                if category in analysis_categories and any(kw in lower_line for kw in keywords):
-                    current_category = category
-                    print(f"Kategori değişti: {current_category}")
-                    break
-            
-            # Eğer bir kategori belirlediyse
-            if current_category and current_category in analysis_categories:
-                # Madde işaretleri veya numaralandırma varsa temizle
-                if line.startswith('-') or line.startswith('•') or line.startswith('*'):
-                    line = line[1:].strip()
-                elif len(line) > 1 and line[0].isdigit() and line[1:].startswith('. '):
-                    line = line[line.find('.')+1:].strip()
+            # ** işaretiyle veya • ile başlayan başlık satırlarını kontrol et
+            if line.startswith('**') or line.startswith('•'):
+                # ** işaretlerini temizle
+                clean_line = line.strip('*').strip()
+                # • işaretini temizle
+                if clean_line.startswith('•'):
+                    clean_line = clean_line[1:].strip()
                 
-                # Satır boş değilse ve anlamlı bir içerik varsa ekle
-                if line and len(line) > 2:  # En az 3 karakter
-                    # Ekstra madde işaretlerini temizle
-                    while line.startswith('-') or line.startswith('•') or line.startswith('*'):
-                        line = line[1:].strip()
+                # Kategoriyi belirle
+                lower_clean = clean_line.lower()
+                
+                for category, keywords in category_keywords.items():
+                    if category in analysis_categories and any(kw in lower_clean for kw in keywords):
+                        # Önceki kategorinin içeriğini kaydet
+                        if current_category and current_content:
+                            if not any("bulunamadı" in content.lower() for content in current_content):
+                                has_valuable_info[current_category] = True
+                            analysis[current_category].extend(current_content)
+                            current_content = []
+                            
+                        current_category = category
+                        found_category = category
+                        print(f"Kategori değişti (başlık işareti): {current_category}")
+                        break
+            
+            # "Kategori:" formatındaki satırları kontrol et
+            elif ':' in line and not (line.startswith('-') or line.startswith('+')):
+                parts = line.split(':', 1)
+                header = parts[0].strip().lower()
+                
+                for category, keywords in category_keywords.items():
+                    if category in analysis_categories and any(kw in header for kw in keywords):
+                        # Önceki kategorinin içeriğini kaydet
+                        if current_category and current_content:
+                            if not any("bulunamadı" in content.lower() for content in current_content):
+                                has_valuable_info[current_category] = True
+                            analysis[current_category].extend(current_content)
+                            current_content = []
+                            
+                        current_category = category
+                        found_category = category
+                        
+                        # İçeriği ekle (başlığın sonrası)
+                        content = parts[1].strip()
+                        if content and not content.lower() in ["yok", "bulunamadı", "belirtilmemiş"]:
+                            current_content.append(content)
+                            if not any("bulunamadı" in content.lower() for content in [content]):
+                                has_valuable_info[current_category] = True
+                                
+                        print(f"Kategori değişti (başlık:içerik): {current_category}")
+                        break
+            
+            # Eğer mevcut kategori varsa ve başlık değilse, içerik olarak ekle
+            elif current_category:
+                # İçerik satırı - temizle
+                content_line = line
+                
+                # Madde işareti varsa temizle
+                if content_line.startswith('-') or content_line.startswith('•') or content_line.startswith('*'):
+                    content_line = content_line[1:].strip()
+                elif content_line.startswith('+'):
+                    content_line = content_line[1:].strip()
                     
-                    analysis[current_category].append(line)
-                    print(f"Eklendi: {current_category} <- '{line}'")
+                # Başlık işaretlerini temizle
+                if content_line.startswith('**') and content_line.endswith('**'):
+                    content_line = content_line[2:-2].strip()
+                elif '**' in content_line:
+                    content_line = content_line.replace('**', '').strip()
+                
+                # Başlık metni veya "Kategori:" formatında olabileceğini kontrol et
+                if ":" in content_line and not found_category:
+                    parts = content_line.split(':', 1)
+                    header = parts[0].strip().lower()
+                    
+                    # Eğer bu bir başlık ise, önceki kategoriden çık
+                    for category, keywords in category_keywords.items():
+                        if category in analysis_categories and any(kw in header for kw in keywords):
+                            # Önceki kategorinin içeriğini kaydet
+                            if current_category and current_content:
+                                if not any("bulunamadı" in content.lower() for content in current_content):
+                                    has_valuable_info[current_category] = True
+                                analysis[current_category].extend(current_content)
+                                current_content = []
+                                
+                            current_category = category
+                            found_category = category
+                            
+                            # İçeriği ekle (başlığın sonrası)
+                            content = parts[1].strip()
+                            if content and not content.lower() in ["yok", "bulunamadı", "belirtilmemiş"]:
+                                current_content.append(content)
+                                if not any("bulunamadı" in content.lower() for content in [content]):
+                                    has_valuable_info[current_category] = True
+                                    
+                            print(f"Kategori değişti (içerik içinde başlık): {current_category}")
+                            break
+                
+                # Eğer başlık değilse ve içerik değerliyse ekle
+                if not found_category and content_line:
+                    # "Bulunamadı" ve benzeri ifadeleri filtrele
+                    not_found_phrases = ["bulunamadı", "bulunmamaktadır", "bulunamadı.", "yok", "yoktur"]
+                    if current_category == "diyagramlar" and any(phrase in content_line.lower() for phrase in not_found_phrases):
+                        # Diyagramlar bulunamadı bilgisi - ekleyelim
+                        current_content.append(f"Diyagram bilgisi bulunamadı: {content_line}")
+                    elif not any(phrase in content_line.lower() for phrase in not_found_phrases):
+                        # Değerli içerik
+                        current_content.append(content_line)
+                        has_valuable_info[current_category] = True
+                        print(f"İçerik eklendi: {current_category} <- '{content_line}'")
+        
+        # Son kategorinin içeriğini kaydet
+        if current_category and current_content:
+            analysis[current_category].extend(current_content)
+        
+        # Tekrarlanan içerikleri temizle
+        for category in analysis_categories.keys():
+            if category in analysis and analysis[category]:
+                # Eğer kategoride içerik varsa
+                unique_items = []
+                seen = set()
+                
+                for item in analysis[category]:
+                    # İçeriğin normalize edilmiş hali
+                    normalized_item = ' '.join(item.lower().split())
+                    
+                    # ** işaretlerini temizle
+                    if normalized_item.startswith('**') and normalized_item.endswith('**'):
+                        normalized_item = normalized_item[2:-2].strip()
+                    
+                    # Başlık sonundaki ':' ve '**' işaretlerini temizle
+                    if normalized_item.endswith(':**'):
+                        normalized_item = normalized_item[:-3].strip()
+                    
+                    if normalized_item not in seen and len(normalized_item) > 1:
+                        seen.add(normalized_item)
+                        # Orijinal öğeyi temizle
+                        cleaned_item = item
+                        # ** işaretlerini temizle
+                        if cleaned_item.startswith('**') and cleaned_item.endswith('**'):
+                            cleaned_item = cleaned_item[2:-2].strip()
+                        # Başlık sonundaki ':' ve '**' işaretlerini temizle
+                        if cleaned_item.endswith(':**'):
+                            cleaned_item = cleaned_item[:-3].strip()
+                            
+                        unique_items.append(cleaned_item)
+                
+                analysis[category] = unique_items
+                
+                # "Bulunamadı" ifadelerini filtrele - eğer değerli içerik varsa
+                if has_valuable_info[category]:
+                    analysis[category] = [
+                        item for item in analysis[category]
+                        if not any(phrase in item.lower() for phrase in 
+                                 ["bulunamadı", "bulunmamaktadır", "yoktur", "bilgi yok"])
+                    ]
         
         # Direkt eşleşenler varsa onları da ekle
         for category, pattern_list in patterns.items():
@@ -456,6 +732,9 @@ def parse_llm_results(results, categories=None):
             if not has_diagram_missing:
                 analysis["eksikler"].append(eksik_msg)
                 print(f"Eksiklere eklendi: '{eksik_msg}'")
+        
+        # Ham LLM çıktısını da ekle
+        analysis["raw_llm_output"] = results
     
     # Her kategori için sonuçları yazdır (hata ayıklama)
     for category, items in analysis.items():

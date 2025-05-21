@@ -54,16 +54,20 @@ pip install -r requirements.txt
    - **Yerel LLM'ler için:**
 
      - **Ollama kullanmak için:**
+
        ```bash
        # Ollama'yı işletim sisteminize göre kurun: https://ollama.ai/download
        ollama pull mistral
        ```
+
      - **LM Studio kullanmak için:**
+
        ```bash
        # LM Studio'yu indirin: https://lmstudio.ai/
        # Python bağlantı kurabilmek için:
        pip install lmstudio
        ```
+
    - **API Tabanlı LLM'ler için:**
 
      - OpenAI: API anahtarınızı [buradan](https://platform.openai.com/api-keys) alın
@@ -77,7 +81,7 @@ pip install -r requirements.txt
 
 6. `.env` dosyasını düzenleyin:
 
-```
+```python
 MONGO_URI=mongodb://localhost:27017/smart_doc_insight
 SECRET_KEY=gizli_anahtarinizi_degistirin
 
@@ -90,7 +94,7 @@ OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=mistral:latest
 
 # LM Studio ayarları 
-LLM_STUDIO_MODEL=deepseek-coder-v2-lite-instruct-mlx
+LLM_STUDIO_MODEL=mistral-nemo-instruct-2407
 
 # API Tabanlı LLM ayarları
 # OpenAI
@@ -116,7 +120,7 @@ python run.py
 
 ## 📁 Proje Yapısı
 
-```
+```paths
 smart-doc-insight/
 ├── app/                      # Ana uygulama paketi
 │   ├── routes/               # API ve sayfa yönlendirmeleri
@@ -201,7 +205,7 @@ Sistem beş farklı LLM sağlayıcı ile çalışabilmektedir:
   1. `pip install lmstudio`
   2. Uygulamayı açın ve modelleri yükleyin
   3. Settings > API Server bölümünden API sunucusunu etkinleştirin
-  4. Çevre değişkeni: `LLM_PROVIDER=lmstudio`, `LLM_STUDIO_MODEL=deepseek-coder-v2-lite-instruct-mlx`
+  4. Çevre değişkeni: `LLM_PROVIDER=lmstudio`, `LLM_STUDIO_MODEL=mistral-nemo-instruct-2407`
   5. Dokümantasyon: https://lmstudio.ai/docs/python
 
 ### API Tabanlı LLM Sağlayıcıları

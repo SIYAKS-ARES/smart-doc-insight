@@ -24,3 +24,8 @@ cryptography>=41.0.0
 # Eksik kütüphaneler
 pytz>=2024.1
 ollama>=0.1.6
+
+# Doküman işleme ve bölümleme için
+langchain>=0.3.25
+langchain-core>=0.3.60
+langchain_text_splitters>=0.3.8
