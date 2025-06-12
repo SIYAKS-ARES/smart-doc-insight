@@ -362,6 +362,7 @@
                         
                         {% for section in analysis_sections %}
                             {% set items = analysis.get('content', {}).get(section.key, []) %}
+                            {% if items and items|length > 0 %}
                             <div class="col-lg-6 mb-4">
                                 <div class="card h-100 border-light shadow-sm">
                                     <div class="card-header bg-light">
@@ -370,23 +371,17 @@
                                         </h5>
                                     </div>
                                     <div class="card-body">
-                                        {% if items and items|length > 0 %}
-                                            <ul class="list-group list-group-flush">
-                                                {% for item in items %}
-                                                <li class="list-group-item bg-transparent">
-                                                    <i class="bi bi-check-circle-fill text-success me-2"></i>{{ item }}
-                                                </li>
-                                                {% endfor %}
-                                            </ul>
-                                        {% else %}
-                                            <div class="text-center text-muted py-3">
-                                                <i class="bi bi-info-circle display-6"></i>
-                                                <p class="mt-2 mb-0">Bulunamadı</p>
-                                            </div>
-                                        {% endif %}
+                                        <ul class="list-group list-group-flush">
+                                            {% for item in items %}
+                                            <li class="list-group-item bg-transparent">
+                                                <i class="bi bi-check-circle-fill text-success me-2"></i>{{ item }}
+                                            </li>
+                                            {% endfor %}
+                                        </ul>
                                     </div>
                                 </div>
                             </div>
+                            {% endif %}
                         {% endfor %}
                     </div>
                 {% endif %}
@@ -761,11 +756,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Özel başlıklarının yönetimi
-    const headingsContainer = document.getElementById('headingsContainer');
-    const addHeadingBtn = document.getElementById('addHeadingBtn');
-    const removeHeadingBtns = document.querySelectorAll('.remove-heading-btn');
-    
+    // Özel başlık modalı için işlevler
     // Başlık template'i
     function createHeadingItem() {
         const headingItem = document.createElement('div');
@@ -816,27 +807,24 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Yeni başlık ekle butonu
+    const addHeadingBtn = document.getElementById('addHeadingBtn');
     if (addHeadingBtn) {
         addHeadingBtn.addEventListener('click', function() {
+            const headingsContainer = document.getElementById('headingsContainer');
             const newHeadingItem = createHeadingItem();
             headingsContainer.appendChild(newHeadingItem);
             updateRemoveButtons();
         });
     }
     
-    // Kaldır butonlarına event listener ekle
-    removeHeadingBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            this.closest('.heading-item').remove();
-            updateRemoveButtons();
-        });
-    });
-    
     // Formu temizle butonu
     const resetFormBtn = document.getElementById('resetFormBtn');
     if (resetFormBtn) {
         resetFormBtn.addEventListener('click', function() {
+            const headingsContainer = document.getElementById('headingsContainer');
+            // Tüm başlıkları temizle
             headingsContainer.innerHTML = '';
+            // Varsayılan bir başlık ekle
             headingsContainer.appendChild(createHeadingItem());
             updateRemoveButtons();
         });
@@ -846,6 +834,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const useDefaultHeadingsBtn = document.getElementById('useDefaultHeadingsBtn');
     if (useDefaultHeadingsBtn) {
         useDefaultHeadingsBtn.addEventListener('click', function() {
+            const headingsContainer = document.getElementById('headingsContainer');
+            // Tüm başlıkları temizle
             headingsContainer.innerHTML = '';
             
             // Varsayılan başlıklar
@@ -875,6 +865,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // İlk başlık için kaldır butonunu gizle
     updateRemoveButtons();
+    
+    // Mevcut kaldır butonlarına event listener ekle
+    document.querySelectorAll('.remove-heading-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.closest('.heading-item').remove();
+            updateRemoveButtons();
+        });
+    });
     
     // Kaydet butonu (özel başlıkları kaydet ama analiz etme)
     const saveHeadingsBtn = document.getElementById('saveHeadingsBtn');
