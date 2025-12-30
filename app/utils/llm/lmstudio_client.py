@@ -1,201 +1,151 @@
 from typing import Dict, Generator, Any, Optional
+import requests
+import json
+
 
 class LMStudioClient:
-    """LM Studio LLM sağlayıcısı ile etkileşim için istemci"""
+    """LM Studio LLM saglayicisi ile etkilesim icin istemci (HTTP API)"""
     
     def __init__(self, model_name: str = "mistral-nemo-instruct-2407"):
         """
-        LM Studio istemcisini başlatır
+        LM Studio istemcisini baslatir
         
         Args:
-            model_name: Kullanılacak model adı
+            model_name: Kullanilacak model adi
         """
         self.model_name = model_name
-        self.server_api_host = "localhost:1234"  # LM Studio varsayılan adresi
-        self._init_client()
+        self.base_url = "http://localhost:1234/v1"
+        self._verify_connection()
         
-    def _init_client(self):
-        """LM Studio istemcisini başlatır"""
+    def _verify_connection(self):
+        """LM Studio sunucusuna baglanti kontrolu yapar"""
         try:
-            import lmstudio
-            
-            # İlk olarak istemcinin halihazırda yapılandırılmış olup olmadığını kontrol et
-            try:
-                # Varsayılan istemciyi yapılandırmayı dene
-                lmstudio.configure_default_client(self.server_api_host)
-                print(f"LM Studio API bağlantısı yapılandırıldı: {self.server_api_host}")
-            except Exception as config_error:
-                # Zaten bir varsayılan istemci varsa, bu hatayı görmezden gel ve devam et
-                print(f"Varsayılan istemci zaten yapılandırılmış, mevcut yapılandırma kullanılıyor: {str(config_error)}")
-                # Hata atma, mevcut yapılandırmayı kullanarak devam et
-            
-            # Model istemcisi oluştur
-            self.client = lmstudio.llm(self.model_name)
-            
-            # Bağlantıyı test et
-            try:
-                info = self.client.get_info()
-                print(f"LM Studio bağlantısı başarılı. Model: {self._get_model_name(info)}")
-            except Exception as e:
-                # Eğer model erişilemezse, daha anlaşılır bir hata mesajı oluştur
-                if "The model could not be loaded" in str(e):
-                    raise ConnectionError(f"LM Studio API'ye bağlantı başarılı, ancak '{self.model_name}' modeli yüklenemedi. Lütfen LM Studio'da modeli yükleyin.")
+            response = requests.get(f"{self.base_url}/models", timeout=5)
+            if response.status_code == 200:
+                models = response.json().get("data", [])
+                model_ids = [m.get("id", "") for m in models]
+                if models:
+                    print(f"LM Studio API baglantisi basarili. Modeller: {model_ids}")
                 else:
-                    raise ConnectionError(f"LM Studio API bağlantısı başarılı, ancak model bilgisi alınamadı: {str(e)}")
-            
-        except ImportError:
-            raise ImportError("lmstudio paketi yüklü değil. 'pip install lmstudio' komutu ile yükleyin.")
-        except ConnectionError as e:
-            raise ConnectionError(f"LM Studio sunucusuna bağlantı kurulamadı ({self.server_api_host}). LM Studio uygulamasının çalıştığından emin olun: {str(e)}")
+                    print("LM Studio API'ye baglanildi, ancak hic yuklu model bulunamadi.")
+            else:
+                raise ConnectionError(f"LM Studio API yanit verdi ancak hata kodu: {response.status_code}")
+        except requests.exceptions.ConnectionError:
+            raise ConnectionError(
+                f"LM Studio sunucusuna baglanamadi ({self.base_url}). "
+                "LM Studio uygulamasinin calistigindan emin olun."
+            )
         except Exception as e:
-            raise Exception(f"LM Studio istemcisi başlatılırken hata oluştu: {str(e)}")
-        
+            raise Exception(f"LM Studio baglanti kontrolu sirasinda hata: {str(e)}")
+    
     def generate(self, prompt: str, **kwargs) -> str:
         """
-        Verilen prompt'a göre yanıt üretir
+        Verilen prompt'a gore yanit uretir
         
         Args:
-            prompt: LLM'e gönderilecek istem metni
-            **kwargs: LM Studio'ya gönderilebilecek ek parametreler
+            prompt: LLM'e gonderilecek istem metni
+            **kwargs: Ek parametreler (options icinde temperature, max_tokens vb.)
             
         Returns:
-            Üretilen yanıt metni
+            Uretilen yanit metni
         """
         try:
             options = kwargs.get("options", {})
             temperature = options.get("temperature", 0.7)
-            max_tokens = options.get("max_tokens", 1024)
+            max_tokens = options.get("max_tokens", 4096)
             
-            # API'nin kabul ettiği parametreleri kontrol et
-            api_params = {}
+            payload = {
+                "model": self.model_name,
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "stream": False
+            }
             
-            # Parametreleri güvenli bir şekilde ekle
-            try:
-                import inspect
-                # respond metodunun parametrelerini kontrol et
-                respond_params = inspect.signature(self.client.respond).parameters.keys()
-                
-                if 'temperature' in respond_params:
-                    api_params['temperature'] = temperature
-                if 'max_tokens' in respond_params:
-                    api_params['max_tokens'] = max_tokens
-                    
-                print(f"Kullanılan API parametreleri: {api_params}")
-            except Exception as param_error:
-                print(f"Parametre kontrolü hatası: {str(param_error)}")
-                # Hiçbir parametre belirtme
-                api_params = {}
+            response = requests.post(
+                f"{self.base_url}/chat/completions",
+                json=payload,
+                timeout=300  # 5 dakika timeout (uzun yanitlar icin)
+            )
             
-            # Parametrelerle birlikte yanıt al
-            if api_params:
-                response = self.client.respond(prompt, **api_params)
+            if response.status_code == 200:
+                data = response.json()
+                return data["choices"][0]["message"]["content"]
             else:
-                # Hiç parametre olmadan dene
-                response = self.client.respond(prompt)
-            
-            # PredictionResult nesnesini string'e dönüştür
-            try:
-                # 1. Öncelikle text veya content özelliği var mı kontrol et
-                if hasattr(response, 'text'):
-                    return response.text
-                elif hasattr(response, 'content'):
-                    return response.content
-                elif hasattr(response, 'output'):
-                    return response.output
-                # 2. Response nesnesini string'e dönüştürmeyi dene
-                else:
-                    return str(response)
-            except Exception as str_error:
-                print(f"Yanıt dönüştürme hatası: {str(str_error)}")
-                # Hata durumunda nesnenin kendisini string olarak döndür
-                return str(response)
+                error_msg = response.text
+                print(f"LM Studio API hatasi ({response.status_code}): {error_msg}")
+                return f"LM Studio Hatasi: {error_msg}"
                 
+        except requests.exceptions.Timeout:
+            print("LM Studio yanit suresi doldu (timeout)")
+            return "LM Studio Hatasi: Yanit suresi doldu"
+        except requests.exceptions.ConnectionError:
+            print("LM Studio baglantisi kesildi")
+            return "LM Studio Hatasi: Baglanti kesildi"
         except Exception as e:
-            print(f"LM Studio yanıt üretme hatası: {str(e)}")
-            return f"LM Studio Hatası: {str(e)}"
+            print(f"LM Studio yanit uretme hatasi: {str(e)}")
+            return f"LM Studio Hatasi: {str(e)}"
     
     def generate_stream(self, prompt: str, **kwargs) -> Generator[str, None, None]:
         """
-        Streaming modunda yanıt üretir
+        Streaming modunda yanit uretir
         
         Args:
-            prompt: LLM'e gönderilecek istem metni
-            **kwargs: LM Studio'ya gönderilebilecek ek parametreler
+            prompt: LLM'e gonderilecek istem metni
+            **kwargs: Ek parametreler
             
         Yields:
-            Parça parça üretilen yanıt metinleri
+            Parca parca uretilen yanit metinleri
         """
         try:
             options = kwargs.get("options", {})
             temperature = options.get("temperature", 0.7)
-            max_tokens = options.get("max_tokens", 1024)
+            max_tokens = options.get("max_tokens", 4096)
             
-            # API'nin kabul ettiği parametreleri kontrol et
-            api_params = {}
+            payload = {
+                "model": self.model_name,
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "stream": True
+            }
             
-            # Parametreleri güvenli bir şekilde ekle
-            try:
-                import inspect
-                # respond_stream metodunun parametrelerini kontrol et
-                stream_params = inspect.signature(self.client.respond_stream).parameters.keys()
-                
-                if 'temperature' in stream_params:
-                    api_params['temperature'] = temperature
-                if 'max_tokens' in stream_params:
-                    api_params['max_tokens'] = max_tokens
-                    
-                print(f"Kullanılan stream API parametreleri: {api_params}")
-            except Exception as param_error:
-                print(f"Stream parametre kontrolü hatası: {str(param_error)}")
-                # Hiçbir parametre belirtme
-                api_params = {}
+            response = requests.post(
+                f"{self.base_url}/chat/completions",
+                json=payload,
+                stream=True,
+                timeout=300
+            )
             
-            # Parametrelerle birlikte yanıt al
-            if api_params:
-                for chunk in self.client.respond_stream(prompt, **api_params):
-                    # Her parçayı string'e dönüştür
-                    try:
-                        if hasattr(chunk, 'text'):
-                            yield chunk.text
-                        elif hasattr(chunk, 'content'):
-                            yield chunk.content
-                        elif hasattr(chunk, 'output'):
-                            yield chunk.output
-                        else:
-                            yield str(chunk)
-                    except:
-                        yield str(chunk)
-            else:
-                # Hiç parametre olmadan dene
-                for chunk in self.client.respond_stream(prompt):
-                    # Her parçayı string'e dönüştür
-                    try:
-                        if hasattr(chunk, 'text'):
-                            yield chunk.text
-                        elif hasattr(chunk, 'content'):
-                            yield chunk.content
-                        elif hasattr(chunk, 'output'):
-                            yield chunk.output
-                        else:
-                            yield str(chunk)
-                    except:
-                        yield str(chunk)
-                
+            if response.status_code != 200:
+                yield f"LM Studio Hatasi: {response.text}"
+                return
+            
+            # SSE (Server-Sent Events) formatinda gelen veriyi isle
+            for line in response.iter_lines():
+                if line:
+                    line_text = line.decode('utf-8')
+                    if line_text.startswith("data: "):
+                        data_str = line_text[6:]  # "data: " kismini kaldir
+                        if data_str.strip() == "[DONE]":
+                            break
+                        try:
+                            data = json.loads(data_str)
+                            delta = data.get("choices", [{}])[0].get("delta", {})
+                            content = delta.get("content", "")
+                            if content:
+                                yield content
+                        except json.JSONDecodeError:
+                            continue
+                            
+        except requests.exceptions.Timeout:
+            yield "LM Studio Streaming Hatasi: Yanit suresi doldu"
+        except requests.exceptions.ConnectionError:
+            yield "LM Studio Streaming Hatasi: Baglanti kesildi"
         except Exception as e:
-            print(f"LM Studio streaming hatası: {str(e)}")
-            yield f"LM Studio Streaming Hatası: {str(e)}"
-
-    def _get_model_name(self, model_info):
-        """Model bilgisinden model adını güvenli bir şekilde alır"""
-        try:
-            if hasattr(model_info, 'display_name'):
-                return model_info.display_name
-            elif hasattr(model_info, '__dict__'):
-                attrs = model_info.__dict__
-                if 'display_name' in attrs:
-                    return attrs['display_name']
-            
-            # Yukarıdaki yöntemler başarısız olursa, string temsilini kullan
-            return str(model_info)
-        except:
-            return self.model_name  # Varsayılan model adına geri dön 
+            print(f"LM Studio streaming hatasi: {str(e)}")
+            yield f"LM Studio Streaming Hatasi: {str(e)}"

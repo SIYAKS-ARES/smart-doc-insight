@@ -173,10 +173,26 @@ def analyze_file(project_id, file_index):
     file_data = project.files[file_index]
 
     # PDF'den metin çıkar
-    pdf_text = extract_text_from_pdf(file_data['path'])
+    pdf_path = file_data.get('path', '')
+    print(f"PDF analiz ediliyor - Dosya yolu: {pdf_path}")
+    
+    pdf_text = extract_text_from_pdf(pdf_path)
 
     if not pdf_text:
-        flash('PDF\'den metin çıkarılamadı', 'danger')
+        # Daha detaylı hata mesajı için dosya varlığını kontrol et
+        file_exists = os.path.exists(pdf_path) if pdf_path else False
+        if not file_exists:
+            # Alternatif yolları da kontrol et
+            upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+            if not os.path.isabs(upload_folder):
+                upload_folder = os.path.join(os.getcwd(), upload_folder)
+            alt_path = os.path.join(upload_folder, os.path.basename(pdf_path))
+            file_exists = os.path.exists(alt_path)
+        
+        if not file_exists:
+            flash(f'PDF dosyası bulunamadı: {os.path.basename(pdf_path)}. Dosya silinmiş veya taşınmış olabilir.', 'danger')
+        else:
+            flash('PDF\'den metin çıkarılamadı. PDF bozuk, şifre korumalı veya sadece görüntü içeriyor olabilir. Terminal loglarını kontrol edin.', 'danger')
         return redirect(url_for('teacher.view_file', project_id=project_id, file_index=file_index))
 
     # Metni parçalara böl (LLM token limiti için)
@@ -961,10 +977,26 @@ def analyze_file_with_custom_headings(project_id, file_index):
     file_data = project.files[file_index]
 
     # PDF'den metin çıkar
-    pdf_text = extract_text_from_pdf(file_data['path'])
+    pdf_path = file_data.get('path', '')
+    print(f"PDF analiz ediliyor - Dosya yolu: {pdf_path}")
+    
+    pdf_text = extract_text_from_pdf(pdf_path)
 
     if not pdf_text:
-        flash('PDF\'den metin çıkarılamadı', 'danger')
+        # Daha detaylı hata mesajı için dosya varlığını kontrol et
+        file_exists = os.path.exists(pdf_path) if pdf_path else False
+        if not file_exists:
+            # Alternatif yolları da kontrol et
+            upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+            if not os.path.isabs(upload_folder):
+                upload_folder = os.path.join(os.getcwd(), upload_folder)
+            alt_path = os.path.join(upload_folder, os.path.basename(pdf_path))
+            file_exists = os.path.exists(alt_path)
+        
+        if not file_exists:
+            flash(f'PDF dosyası bulunamadı: {os.path.basename(pdf_path)}. Dosya silinmiş veya taşınmış olabilir.', 'danger')
+        else:
+            flash('PDF\'den metin çıkarılamadı. PDF bozuk, şifre korumalı veya sadece görüntü içeriyor olabilir. Terminal loglarını kontrol edin.', 'danger')
         return redirect(url_for('teacher.view_file', project_id=project_id, file_index=file_index))
 
     # Metni parçalara böl (LLM token limiti için)

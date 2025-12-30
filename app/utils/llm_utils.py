@@ -19,8 +19,63 @@ DEFAULT_ANALYSIS_CATEGORIES = {
     "eksikler": "İçerikte eksik görünen bir şey var mı?"
 }
 
-# Varsayılan analiz şablonu
-DEFAULT_PROMPT_TEMPLATE = """Bu PDF bir öğrenci projesidir.
+# Prompt şablonlarını XML veya JSON dosyasından yükle
+def load_prompt_templates():
+    """
+    XML veya JSON dosyasından prompt şablonlarını yükler
+    Önce XML dosyasını dener, yoksa JSON'a bakar
+    
+    Returns:
+        dict: Prompt şablonları sözlüğü
+    """
+    import xml.etree.ElementTree as ET
+    
+    # Önce XML dosyasını dene
+    xml_file = os.path.join(os.path.dirname(__file__), 'prompt_templates.xml')
+    if os.path.exists(xml_file):
+        try:
+            # XML dosyasını text olarak oku (XML parse etmeden, çünkü prompt içinde XML örnekleri var)
+            with open(xml_file, 'r', encoding='utf-8') as f:
+                xml_content = f.read()
+            
+            # XML dosyasından prompt'u çıkar
+            # Yeni format: system_instruction, output_schema, input_document, analysis_instruction
+            templates = {}
+            
+            # Tüm içeriği birleştir (XML etiketlerini koruyarak)
+            # {content} placeholder'ını koru
+            templates["default_prompt_template"] = xml_content
+            
+            print("XML prompt şablonu başarıyla yüklendi")
+            return templates
+        except ET.ParseError as e:
+            print(f"Uyarı: XML dosyası parse edilemedi: {e}. JSON dosyasına geçiliyor.")
+        except Exception as e:
+            print(f"Uyarı: XML dosyası okunurken hata: {e}. JSON dosyasına geçiliyor.")
+    
+    # XML yoksa veya hata varsa JSON dosyasını dene
+    json_file = os.path.join(os.path.dirname(__file__), 'prompt_templates.json')
+    try:
+        with open(json_file, 'r', encoding='utf-8') as f:
+            templates = json.load(f)
+        
+        # Eğer array formatındaysa, string'e çevir
+        processed_templates = {}
+        for key, value in templates.items():
+            if isinstance(value, list):
+                # Array'i newline ile birleştir
+                processed_templates[key] = '\n'.join(value)
+            else:
+                # Zaten string ise olduğu gibi kullan
+                processed_templates[key] = value
+        
+        print("JSON prompt şablonu başarıyla yüklendi")
+        return processed_templates
+    except FileNotFoundError:
+        print(f"Uyarı: {prompt_file} dosyası bulunamadı. Varsayılan prompt kullanılıyor.")
+        # Fallback: Eğer JSON dosyası yoksa varsayılan prompt'u döndür
+        return {
+            "default_prompt_template": """Bu PDF bir öğrenci projesidir.
     İçeriği detaylı bir şekilde analiz et ve şu bilgileri çıkar:
     • Grup üyeleri kimler?
     • Kim hangi bölümden sorumlu?
@@ -55,6 +110,91 @@ DEFAULT_PROMPT_TEMPLATE = """Bu PDF bir öğrenci projesidir.
     Hayır, grup üyeleri dokümanda belirtilmemiştir.
 
     SADECE istenen formatta ve sadece gerekiyorsa kısa (bir iki cümlelik) açıklamayla yanıtla."""
+        }
+    except json.JSONDecodeError as e:
+        print(f"Uyarı: {prompt_file} dosyası geçersiz JSON formatında. Hata: {e}. Varsayılan prompt kullanılıyor.")
+        return {
+            "default_prompt_template": """Bu PDF bir öğrenci projesidir.
+    İçeriği detaylı bir şekilde analiz et ve şu bilgileri çıkar:
+    • Grup üyeleri kimler?
+    • Kim hangi bölümden sorumlu?
+    • Diyagramları kim çizmiş?
+    • Belirgin başlıklar neler?
+    • İçerikte eksik görünen bir şey var mı?
+
+    İşte PDF'in içeriği:
+
+    {content}
+
+    Yanıtı şu format ve kurallara göre ver:
+    1. Her kategori için açık ve net bilgiler ver
+    2. Her kategori için maddeler halinde yanıtla (• işareti kullan)
+    3. Eğer bilgi bulunamazsa "Bu konuda bilgi bulunamadı" yaz
+    4. Grup üyeleri için isimleri tam olarak al
+    5. Başlıkları dokümanın içindekiler kısmından veya metin içindeki belirgin alt bölümlerden al
+    6. Eksikler bölümünde sadece dokümanda olması gerekip de bulunmayan önemli kısımları belirt
+    7. Başlık adını yaz ve ardından iki nokta üst üste koy
+    8. Evet/Hayır ile başla
+    9. Çok kısa açıklama ekle (maksimum 1-2 cümle)
+    10. Fazla detaya girme, sadece temel bilgiyi ver
+
+    Örnek:
+    Proje Tanımı:
+    Evet, 2. sayfada "Proje Tanımı" başlığı altında kapsamlı bir şekilde ele alınmıştır.
+
+    GitHub Linki:
+    Evet, 5. bölümde repository linki paylaşılmıştır (https://github.com/example/repo).
+
+    Grup Üyeleri:
+    Hayır, grup üyeleri dokümanda belirtilmemiştir.
+
+    SADECE istenen formatta ve sadece gerekiyorsa kısa (bir iki cümlelik) açıklamayla yanıtla."""
+        }
+    except Exception as e:
+        print(f"Uyarı: Prompt şablonları yüklenirken hata oluştu: {e}. Varsayılan prompt kullanılıyor.")
+        return {
+            "default_prompt_template": """Bu PDF bir öğrenci projesidir.
+    İçeriği detaylı bir şekilde analiz et ve şu bilgileri çıkar:
+    • Grup üyeleri kimler?
+    • Kim hangi bölümden sorumlu?
+    • Diyagramları kim çizmiş?
+    • Belirgin başlıklar neler?
+    • İçerikte eksik görünen bir şey var mı?
+
+    İşte PDF'in içeriği:
+
+    {content}
+
+    Yanıtı şu format ve kurallara göre ver:
+    1. Her kategori için açık ve net bilgiler ver
+    2. Her kategori için maddeler halinde yanıtla (• işareti kullan)
+    3. Eğer bilgi bulunamazsa "Bu konuda bilgi bulunamadı" yaz
+    4. Grup üyeleri için isimleri tam olarak al
+    5. Başlıkları dokümanın içindekiler kısmından veya metin içindeki belirgin alt bölümlerden al
+    6. Eksikler bölümünde sadece dokümanda olması gerekip de bulunmayan önemli kısımları belirt
+    7. Başlık adını yaz ve ardından iki nokta üst üste koy
+    8. Evet/Hayır ile başla
+    9. Çok kısa açıklama ekle (maksimum 1-2 cümle)
+    10. Fazla detaya girme, sadece temel bilgiyi ver
+
+    Örnek:
+    Proje Tanımı:
+    Evet, 2. sayfada "Proje Tanımı" başlığı altında kapsamlı bir şekilde ele alınmıştır.
+
+    GitHub Linki:
+    Evet, 5. bölümde repository linki paylaşılmıştır (https://github.com/example/repo).
+
+    Grup Üyeleri:
+    Hayır, grup üyeleri dokümanda belirtilmemiştir.
+
+    SADECE istenen formatta ve sadece gerekiyorsa kısa (bir iki cümlelik) açıklamayla yanıtla."""
+        }
+
+# Prompt şablonlarını yükle
+_PROMPT_TEMPLATES = load_prompt_templates()
+
+# Varsayılan analiz şablonu (JSON'dan yüklenir)
+DEFAULT_PROMPT_TEMPLATE = _PROMPT_TEMPLATES.get("default_prompt_template", "")
 
 def analyze_text_with_llm(text_chunks, categories=None, custom_prompt=None):
     """
@@ -96,18 +236,10 @@ def analyze_text_with_llm(text_chunks, categories=None, custom_prompt=None):
         with open('/tmp/llm_debug/info.txt', 'a') as f:
             f.write("Özel prompt kullanılıyor\n")
     elif is_custom_analysis:
-        # Özel kategoriler var ama prompt verilmemişse, basit prompt oluştur
-        prompt_template = """Bu PDF bir öğrenci projesidir. Aşağıdaki soruları analiz et ve her biri için
-        KISA VE NET cevap ver:"""
-
-        # Kategorileri prompt'a ekle
-        for category_key, category_title in analysis_categories.items():
-            if category_key.startswith('custom_'):
-                # Başlık adını temizle
-                clean_title = category_title.strip().rstrip(':').rstrip('?')
-                prompt_template += f"• {clean_title}\n"
-
-        prompt_template += """
+        # Özel kategoriler var ama prompt verilmemişse, JSON'dan şablonu al ve oluştur
+        custom_prefix = _PROMPT_TEMPLATES.get("custom_categories_prompt_template", 
+            "Bu PDF bir öğrenci projesidir. Aşağıdaki soruları analiz et ve her biri için\n        KISA VE NET cevap ver:")
+        custom_suffix = _PROMPT_TEMPLATES.get("custom_categories_prompt_suffix", """
             İşte PDF'in içeriği:
 
             {content}
@@ -128,7 +260,18 @@ def analyze_text_with_llm(text_chunks, categories=None, custom_prompt=None):
             Grup Üyeleri:
             Hayır, grup üyelerinin listesi dokümanda belirtilmemiştir.
 
-            SADECE istenen formatta yanıtla, ekstra açıklama yapma."""
+            SADECE istenen formatta yanıtla, ekstra açıklama yapma.""")
+        
+        prompt_template = custom_prefix
+
+        # Kategorileri prompt'a ekle
+        for category_key, category_title in analysis_categories.items():
+            if category_key.startswith('custom_'):
+                # Başlık adını temizle
+                clean_title = category_title.strip().rstrip(':').rstrip('?')
+                prompt_template += f"• {clean_title}\n"
+
+        prompt_template += custom_suffix
 
         with open('/tmp/llm_debug/info.txt', 'a') as f:
             f.write("Özel kategoriler için otomatik prompt oluşturuldu\n")
@@ -213,7 +356,39 @@ def analyze_text_with_llm(text_chunks, categories=None, custom_prompt=None):
             f.write(f"Sistem hatası: {error_msg}\n")
 
     # Sonuçları birleştir ve analiz et
-    combined_results = " ".join(results) if len(results) > 1 else (results[0] if results else "Analiz sonucu alınamadı.")
+    # Eğer XML veya JSON formatındaysa, sonuçları birleştirmek yerine ilk geçerli XML/JSON'u kullan
+    combined_results = None
+    if len(results) > 1:
+        # Birden fazla sonuç varsa, XML veya JSON formatında olan ilkini bul
+        import xml.etree.ElementTree as ET
+        for result in results:
+            try:
+                cleaned = result.strip()
+                # Markdown code block temizle
+                if cleaned.startswith('```'):
+                    lines = cleaned.split('\n')
+                    cleaned = '\n'.join(lines[1:-1])
+                
+                # Önce XML olup olmadığını kontrol et
+                try:
+                    ET.fromstring(cleaned)
+                    combined_results = cleaned
+                    break
+                except:
+                    # XML değilse JSON'u dene
+                    try:
+                        json.loads(cleaned)
+                        combined_results = cleaned
+                        break
+                    except:
+                        continue
+            except:
+                continue
+        # XML/JSON bulunamadıysa birleştir
+        if combined_results is None:
+            combined_results = " ".join(results)
+    else:
+        combined_results = results[0] if results else "Analiz sonucu alınamadı."
 
     # Sonuçları ayrıştır
     final_analysis = parse_llm_results(combined_results, analysis_categories)
@@ -228,9 +403,10 @@ def analyze_text_with_llm(text_chunks, categories=None, custom_prompt=None):
 def parse_llm_results(results, categories=None):
     """
     LLM sonuçlarını ayrıştırır ve yapılandırılmış bir veri oluşturur
+    JSON formatında yanıt bekler ve parse eder
 
     Args:
-        results: LLM'den gelen sonuç metni
+        results: LLM'den gelen sonuç metni (JSON formatında olmalı)
         categories: Kullanılacak kategoriler (None ise varsayılan kategoriler kullanılır)
     """
     print(f"Ayrıştırılacak LLM sonucu: {results}")
@@ -258,7 +434,255 @@ def parse_llm_results(results, categories=None):
     if not results:
         return analysis
 
-    # Özel kategoriler için ayrıştırma kontrolü
+    # Önce XML formatında yanıt olup olmadığını kontrol et
+    xml_data = None
+    json_data = None
+    
+    try:
+        import xml.etree.ElementTree as ET
+        
+        # Markdown code block içinde XML olabilir, temizle
+        cleaned_results = results.strip()
+        if cleaned_results.startswith('```'):
+            # Markdown code block'u temizle
+            lines = cleaned_results.split('\n')
+            # İlk ve son satırları (```xml ve ```) atla
+            cleaned_results = '\n'.join(lines[1:-1])
+        elif cleaned_results.startswith('```xml'):
+            lines = cleaned_results.split('\n')
+            cleaned_results = '\n'.join(lines[1:-1])
+        
+        # XML parse et
+        root = ET.fromstring(cleaned_results)
+        
+        # Yeni format: <analysis_result> root elementi olabilir
+        analysis_result = root if root.tag == 'analysis_result' else root.find('analysis_result')
+        if analysis_result is None:
+            # Eski format: direkt root'tan oku
+            analysis_result = root
+        
+        # XML'i dict'e çevir
+        xml_data = {}
+        
+        # Yeni format: group_members, responsibilities, diagrams_info, main_headings, missing_sections
+        # Eski format: grup_uyeleri, sorumluluk_paylasimi, diyagram_cizenler, ana_basliklar, eksik_analizi
+        
+        # Grup üyeleri
+        group_members = analysis_result.find('group_members')
+        if group_members is not None:
+            xml_data['grup_uyeleri'] = [member.text.strip() for member in group_members.findall('member') if member.text]
+        else:
+            # Eski format
+            grup_uyeleri = analysis_result.find('grup_uyeleri')
+            if grup_uyeleri is not None:
+                xml_data['grup_uyeleri'] = [uye.text.strip() for uye in grup_uyeleri.findall('uye') if uye.text]
+        
+        # Sorumluluklar
+        responsibilities = analysis_result.find('responsibilities')
+        if responsibilities is not None:
+            xml_data['sorumluluk_paylasimi'] = [item.text.strip() for item in responsibilities.findall('item') if item.text]
+        else:
+            # Eski format
+            sorumluluk = analysis_result.find('sorumluluk_paylasimi')
+            if sorumluluk is not None:
+                xml_data['sorumluluk_paylasimi'] = [gorev.text.strip() for gorev in sorumluluk.findall('gorev') if gorev.text]
+        
+        # Diyagramlar
+        diagrams_info = analysis_result.find('diagrams_info')
+        if diagrams_info is not None:
+            diyagram_text = diagrams_info.text.strip() if diagrams_info.text else ""
+            # Eğer "Belirtilmemiş" ise boş string olarak işaretle (sonra boş liste olacak)
+            if diyagram_text.lower() in ['belirtilmemiş', 'bilgi bulunamadı', '']:
+                xml_data['diyagram_cizenler'] = ""
+            else:
+                xml_data['diyagram_cizenler'] = diyagram_text
+        else:
+            # Eski format
+            diyagram = analysis_result.find('diyagram_cizenler')
+            if diyagram is not None:
+                diyagram_text = diyagram.text.strip() if diyagram.text else ""
+                if diyagram_text.lower() in ['belirtilmemiş', 'bilgi bulunamadı', '']:
+                    xml_data['diyagram_cizenler'] = ""
+                else:
+                    xml_data['diyagram_cizenler'] = diyagram_text
+        
+        # Ana başlıklar
+        main_headings = analysis_result.find('main_headings')
+        if main_headings is not None:
+            xml_data['ana_basliklar'] = [heading.text.strip() for heading in main_headings.findall('heading') if heading.text]
+        else:
+            # Eski format
+            basliklar = analysis_result.find('ana_basliklar')
+            if basliklar is not None:
+                xml_data['ana_basliklar'] = [baslik.text.strip() for baslik in basliklar.findall('baslik') if baslik.text]
+        
+        # Eksik analizi
+        missing_sections = analysis_result.find('missing_sections')
+        if missing_sections is not None:
+            eksik_text = missing_sections.text.strip() if missing_sections.text else ""
+            # Eğer "Bilgi bulunamadı" ise boş string olarak işaretle
+            if eksik_text.lower() in ['bilgi bulunamadı', '']:
+                xml_data['eksik_analizi'] = ""
+            else:
+                xml_data['eksik_analizi'] = eksik_text
+        else:
+            # Eski format
+            eksik = analysis_result.find('eksik_analizi')
+            if eksik is not None:
+                eksik_text = eksik.text.strip() if eksik.text else ""
+                if eksik_text.lower() in ['bilgi bulunamadı', '']:
+                    xml_data['eksik_analizi'] = ""
+                else:
+                    xml_data['eksik_analizi'] = eksik_text
+        
+        # Debug log
+        with open('/tmp/llm_debug/info.txt', 'a') as f:
+            f.write(f"\n--- XML PARSING BAŞARILI ---\n")
+            f.write(f"Parse edilen XML: {xml_data}\n")
+        
+    except ET.ParseError as e:
+        # XML parse edilemedi, JSON'a geç
+        with open('/tmp/llm_debug/info.txt', 'a') as f:
+            f.write(f"\n--- XML PARSING BAŞARISIZ, JSON'A GEÇİLİYOR ---\n")
+            f.write(f"XML hatası: {e}\n")
+        xml_data = None
+    except Exception as e:
+        # Diğer hatalar
+        with open('/tmp/llm_debug/info.txt', 'a') as f:
+            f.write(f"\n--- XML PARSING BAŞARISIZ (Genel hata), JSON'A GEÇİLİYOR ---\n")
+            f.write(f"Hata: {e}\n")
+        xml_data = None
+    
+    # XML parse edilemediyse JSON'u dene
+    if xml_data is None:
+        try:
+            # Markdown code block içinde JSON olabilir, temizle
+            cleaned_results = results.strip()
+            if cleaned_results.startswith('```'):
+                # Markdown code block'u temizle
+                lines = cleaned_results.split('\n')
+                # İlk ve son satırları (```json ve ```) atla
+                cleaned_results = '\n'.join(lines[1:-1])
+            elif cleaned_results.startswith('```json'):
+                lines = cleaned_results.split('\n')
+                cleaned_results = '\n'.join(lines[1:-1])
+            
+            # JSON parse et
+            json_data = json.loads(cleaned_results)
+            
+            # Debug log
+            with open('/tmp/llm_debug/info.txt', 'a') as f:
+                f.write(f"\n--- JSON PARSING BAŞARILI ---\n")
+                f.write(f"Parse edilen JSON: {json_data}\n")
+            
+        except json.JSONDecodeError as e:
+            # JSON parse edilemedi, eski text parsing yöntemine geri dön
+            with open('/tmp/llm_debug/info.txt', 'a') as f:
+                f.write(f"\n--- JSON PARSING BAŞARISIZ, TEXT PARSING'E GEÇİLİYOR ---\n")
+                f.write(f"JSON hatası: {e}\n")
+            json_data = None
+
+    # XML başarıyla parse edildiyse, direkt kullan
+    if xml_data:
+        # Yeni XML formatından eski kategori formatına mapping
+        xml_to_category_mapping = {
+            "grup_uyeleri": "grup_uyeleri",  # Aynı
+            "sorumluluk_paylasimi": "sorumluluklar",
+            "diyagram_cizenler": "diyagramlar",
+            "ana_basliklar": "basliklar",
+            "eksik_analizi": "eksikler"
+        }
+        
+        # XML'den gelen verileri analiz dict'ine aktar
+        for xml_key, xml_value in xml_data.items():
+            # Kategori mapping'i yap
+            category_key = xml_to_category_mapping.get(xml_key, xml_key)
+            
+            # Eğer kategori mevcut kategoriler arasındaysa ekle
+            if category_key in analysis_categories:
+                if isinstance(xml_value, list):
+                    # Liste ise direkt ekle
+                    analysis[category_key] = xml_value
+                elif isinstance(xml_value, str):
+                    # String ise liste olarak ekle
+                    if xml_value and xml_value.lower() not in ['bilgi bulunamadı', 'belirtilmemiş', 'null', 'none', '']:
+                        analysis[category_key] = [xml_value]
+                    else:
+                        analysis[category_key] = []
+                else:
+                    # Diğer tipler için string'e çevir
+                    analysis[category_key] = [str(xml_value)] if xml_value else []
+        
+        # Grup üyeleri için temizleme yap
+        if "grup_uyeleri" in analysis:
+            cleaned_members = []
+            for item in analysis["grup_uyeleri"]:
+                cleaned = clean_group_member_name(str(item))
+                if cleaned:
+                    cleaned_members.append(cleaned)
+            analysis["grup_uyeleri"] = cleaned_members
+        
+        # Debug log
+        with open('/tmp/llm_debug/info.txt', 'a') as f:
+            f.write(f"\n--- XML PARSING SONUÇLARI ---\n")
+            for category, items in analysis.items():
+                if category != "ham_sonuc":
+                    f.write(f"{category}: {len(items)} madde - {items}\n")
+            f.write("--- XML PARSING TAMAMLANDI ---\n\n")
+        
+        return analysis
+    
+    # JSON başarıyla parse edildiyse, direkt kullan
+    if json_data:
+        # Yeni JSON formatından eski kategori formatına mapping
+        json_to_category_mapping = {
+            "grup_uyeleri": "grup_uyeleri",  # Aynı
+            "sorumluluk_paylasimi": "sorumluluklar",
+            "diyagram_cizenler": "diyagramlar",
+            "ana_basliklar": "basliklar",
+            "eksik_analizi": "eksikler"
+        }
+        
+        # JSON'dan gelen verileri analiz dict'ine aktar
+        for json_key, json_value in json_data.items():
+            # Kategori mapping'i yap
+            category_key = json_to_category_mapping.get(json_key, json_key)
+            
+            # Eğer kategori mevcut kategoriler arasındaysa ekle
+            if category_key in analysis_categories:
+                if isinstance(json_value, list):
+                    # Liste ise direkt ekle
+                    analysis[category_key] = json_value
+                elif isinstance(json_value, str):
+                    # String ise liste olarak ekle
+                    if json_value and json_value.lower() not in ['bilgi bulunamadı', 'belirtilmemiş', 'null', 'none']:
+                        analysis[category_key] = [json_value]
+                    else:
+                        analysis[category_key] = []
+                else:
+                    # Diğer tipler için string'e çevir
+                    analysis[category_key] = [str(json_value)] if json_value else []
+        
+        # Grup üyeleri için temizleme yap
+        if "grup_uyeleri" in analysis:
+            cleaned_members = []
+            for item in analysis["grup_uyeleri"]:
+                cleaned = clean_group_member_name(str(item))
+                if cleaned:
+                    cleaned_members.append(cleaned)
+            analysis["grup_uyeleri"] = cleaned_members
+        
+        # Debug log
+        with open('/tmp/llm_debug/info.txt', 'a') as f:
+            f.write(f"\n--- JSON PARSING SONUÇLARI ---\n")
+            for category, items in analysis.items():
+                if category != "ham_sonuc":
+                    f.write(f"{category}: {len(items)} madde - {items}\n")
+            f.write("--- JSON PARSING TAMAMLANDI ---\n\n")
+        
+        return analysis
+
+    # Özel kategoriler için ayrıştırma kontrolü (JSON parse edilemediyse eski yöntem)
     is_custom_analysis = any(key.startswith('custom_') for key in analysis_categories.keys())
 
     # Debug log
@@ -358,7 +782,13 @@ def parse_llm_results(results, categories=None):
                         # Kısa yanıtları birleştir
                         combined_response = " ".join(current_content).strip()
                         if combined_response and not any(skip in combined_response.lower() for skip in ['bu konuda bilgi bulunamadı', 'bilgi bulunamadı', 'veri bulunamadı']):
-                            analysis[current_category].append(combined_response)
+                            # Eğer grup üyeleri kategorisindeyse temizle
+                            if current_category == "grup_uyeleri" or (isinstance(current_category, str) and "grup" in current_category.lower() and "üye" in current_category.lower()):
+                                combined_response = clean_group_member_name(combined_response)
+                                if combined_response:  # Sadece temizlenmiş değer varsa ekle
+                                    analysis[current_category].append(combined_response)
+                            else:
+                                analysis[current_category].append(combined_response)
 
                         # Debug log
                         with open('/tmp/llm_debug/info.txt', 'a') as f:
@@ -397,11 +827,28 @@ def parse_llm_results(results, categories=None):
         if current_category and current_content:
             combined_response = " ".join(current_content).strip()
             if combined_response and not any(skip in combined_response.lower() for skip in ['bu konuda bilgi bulunamadı', 'bilgi bulunamadı', 'veri bulunamadı']):
-                analysis[current_category].append(combined_response)
+                # Eğer grup üyeleri kategorisindeyse temizle
+                if current_category == "grup_uyeleri" or (isinstance(current_category, str) and "grup" in current_category.lower() and "üye" in current_category.lower()):
+                    combined_response = clean_group_member_name(combined_response)
+                    if combined_response:  # Sadece temizlenmiş değer varsa ekle
+                        analysis[current_category].append(combined_response)
+                else:
+                    analysis[current_category].append(combined_response)
 
             # Debug log
             with open('/tmp/llm_debug/info.txt', 'a') as f:
                 f.write(f"Son kategori kaydedildi: {current_category}, birleştirilmiş yanıt: {combined_response}\n")
+        
+        # Özel kategoriler için grup üyeleri temizlemesi
+        for category_key in analysis_categories.keys():
+            if category_key == "grup_uyeleri" or (isinstance(category_key, str) and "grup" in category_key.lower() and "üye" in category_key.lower()):
+                if category_key in analysis:
+                    cleaned_items = []
+                    for item in analysis[category_key]:
+                        cleaned = clean_group_member_name(item)
+                        if cleaned:
+                            cleaned_items.append(cleaned)
+                    analysis[category_key] = cleaned_items
 
     else:
         # Standart kategoriler için mevcut ayrıştırma mantığı
@@ -463,12 +910,28 @@ def parse_llm_results(results, categories=None):
                 if line and len(line) > 2:
                     # Kategori başlığı içermeyen satırları ekle
                     if not any(kw.lower() in line.lower() for kw in category_keywords[current_category]):
-                        current_content.append(line)
-                        print(f"Eklendi: {current_category} <- '{line}'")
+                        # Eğer grup üyeleri kategorisindeyse temizle
+                        if current_category == "grup_uyeleri":
+                            cleaned_line = clean_group_member_name(line)
+                            if cleaned_line:  # Sadece temizlenmiş değer varsa ekle
+                                current_content.append(cleaned_line)
+                                print(f"Eklendi (temizlenmiş): {current_category} <- '{cleaned_line}'")
+                        else:
+                            current_content.append(line)
+                            print(f"Eklendi: {current_category} <- '{line}'")
 
         # Son kategorinin içeriğini kaydet
         if current_category and current_content:
-            analysis[current_category].extend(current_content)
+            # Eğer grup üyeleri kategorisindeyse temizle
+            if current_category == "grup_uyeleri":
+                cleaned_content = []
+                for item in current_content:
+                    cleaned = clean_group_member_name(item)
+                    if cleaned:
+                        cleaned_content.append(cleaned)
+                analysis[current_category].extend(cleaned_content)
+            else:
+                analysis[current_category].extend(current_content)
 
         # Diyagramlar için özel işlem
         if "diyagramlar" in analysis_categories and not analysis["diyagramlar"]:
@@ -490,6 +953,15 @@ def parse_llm_results(results, categories=None):
                     if not any(kw in lower_line for kw in category_keywords["eksikler"]):
                         analysis["eksikler"].append(line)
 
+    # Grup üyeleri için temizleme yap (şehir, kurum gibi ekstra bilgileri kaldır)
+    if "grup_uyeleri" in analysis:
+        cleaned_members = []
+        for item in analysis["grup_uyeleri"]:
+            cleaned = clean_group_member_name(item)
+            if cleaned:
+                cleaned_members.append(cleaned)
+        analysis["grup_uyeleri"] = cleaned_members
+
     # Her kategori için sonuçları yazdır (hata ayıklama)
     with open('/tmp/llm_debug/info.txt', 'a') as f:
         f.write(f"\n--- PARSING SONUÇLARI ---\n")
@@ -499,6 +971,85 @@ def parse_llm_results(results, categories=None):
         f.write("--- PARSING TAMAMLANDI ---\n\n")
 
     return analysis
+
+def clean_group_member_name(member_text):
+    """
+    Grup üyesi isimlerinden şehir, kurum, üniversite gibi ekstra bilgileri temizler
+    
+    Args:
+        member_text: Ham grup üyesi metni (örn: "Ahmet Yılmaz: İstanbul, Türkiye")
+    
+    Returns:
+        str: Temizlenmiş sadece isim (örn: "Ahmet Yılmaz")
+    """
+    if not member_text:
+        return ""
+    
+    # Madde işaretlerini temizle
+    text = member_text.strip()
+    if text.startswith('•') or text.startswith('-') or text.startswith('*'):
+        text = text[1:].strip()
+    
+    # İki nokta üst üste varsa, sadece öncesini al (isim kısmı)
+    if ':' in text:
+        text = text.split(':')[0].strip()
+    
+    # Virgül varsa kontrol et
+    if ',' in text:
+        parts = [p.strip() for p in text.split(',')]
+        # Eğer 2 parça varsa ve ikincisi kısa ise (soyadı, adı formatı olabilir)
+        if len(parts) == 2 and len(parts[1].split()) <= 2:
+            # İkinci parçanın şehir/kurum olup olmadığını kontrol et
+            second_part_lower = parts[1].lower()
+            # Şehir, üniversite, kurum gibi kelimeler içeriyorsa ilk parçayı al
+            unwanted_keywords = ['üniversite', 'university', 'fakülte', 'faculty', 'bölüm', 'department', 
+                                'türkiye', 'turkey', 'kurum', 'institution', 'adres', 'address', 'şehir', 'city']
+            if any(keyword in second_part_lower for keyword in unwanted_keywords):
+                text = parts[0]
+            else:
+                # Muhtemelen "Soyadı, Adı" formatı, birleştir
+                text = f"{parts[1]} {parts[0]}"
+        else:
+            # İlk kısmı al (isim)
+            text = parts[0]
+    
+    # Şehir, üniversite, kurum gibi kelimeleri içeriyorsa temizle
+    import re
+    # Türkçe şehir isimleri (en yaygın olanlar)
+    turkish_cities = ['istanbul', 'ankara', 'izmir', 'bursa', 'antalya', 'adana', 'gaziantep', 'konya', 
+                     'kayseri', 'mersin', 'eskisehir', 'diyarbakir', 'samsun', 'denizli', 'sanliurfa', 
+                     'malatya', 'erzurum', 'van', 'batman', 'elazig', 'sivas', 'trabzon', 'manisa', 
+                     'kocaeli', 'balikesir', 'tekirdag', 'aydin', 'osmaniye', 'kilis', 'kirikkale', 
+                     'aksaray', 'duzce', 'sakarya', 'afyon', 'isparta', 'burdur', 'mugla', 'usak', 
+                     'kutahya', 'bilecik', 'bolu', 'bartin', 'karabuk', 'zonguldak', 'kastamonu', 
+                     'sinop', 'ordu', 'giresun', 'rize', 'artvin', 'ardahan', 'kars', 'agri', 'igdir', 
+                     'erzincan', 'bingol', 'mus', 'bitlis', 'siirt', 'hakkari', 'mardin', 'sirnak', 
+                     'hatay', 'nevsehir', 'nigde', 'yozgat', 'corum', 'amasya', 'tokat', 'gumushane', 
+                     'bayburt', 'tunceli', 'adiyaman', 'canakkale', 'edirne', 'kirklareli']
+    
+    # Kelimeleri kontrol et
+    words = text.split()
+    cleaned_words = []
+    for word in words:
+        word_lower = word.lower().strip('.,;:()[]{}')
+        # Şehir ismi, üniversite, kurum gibi kelimeleri atla
+        if (word_lower in turkish_cities or 
+            any(keyword in word_lower for keyword in ['üniversite', 'university', 'üniv', 'univ', 'fakülte', 
+                                                      'faculty', 'bölüm', 'department', 'türkiye', 'turkey', 
+                                                      'kurum', 'institution', 'adres', 'address', 'şehir', 'city', 'il'])):
+            continue
+        cleaned_words.append(word)
+    
+    text = ' '.join(cleaned_words)
+    
+    # Fazla boşlukları temizle
+    text = ' '.join(text.split())
+    
+    # Eğer çok kısa kaldıysa (2 karakterden az) veya sadece noktalama varsa, boş döndür
+    if len(text.strip()) < 2 or text.strip() in ['.', ',', ':', ';', '-']:
+        return ""
+    
+    return text.strip()
 
 def extract_bullet_points(lines):
     """
